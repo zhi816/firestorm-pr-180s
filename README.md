@@ -26,7 +26,7 @@
 - 單一 `index.html`（HTML + CSS + JS），不需要後端
 - LLM：Groq（llama-3.1-8b-instant）或 Google Gemini，API Key 由玩家自己輸入，只存在瀏覽器
 - 沒有 Key 或 API 故障時，自動改用內建的離線資料，展演時一定能玩
-- 美術方向：像素 RPG × 社群介面（討論中，見 [決策紀錄](docs/log.md)）
+- 美術方向：像素 RPG × 社群介面（細節暫定，見 [美術設計規格書](docs/art/美術設計規格書.md)）
 
 ## 專案結構
 
@@ -64,7 +64,7 @@ firestorm-pr-180s/
 - [x] 美術風格改為像素 RPG，完成風格樣張 v1（[開啟樣張](docs/art/samples/像素風格樣張_v1.html)）
 - [x] 手機版排版 v2 樣張（[開啟樣張](docs/art/samples/像素風格樣張_v2.html)，待確認）
 - [x] 結局畫面（新聞卡、診斷書）像素版樣張 v3（[開啟樣張](docs/art/samples/像素風格樣張_v3.html)，待確認）
-- [ ] 美術設計規格書改寫為像素 RPG 版本
+- [x] 美術設計規格書改寫為像素 RPG 版本（v2，暫定）
 - [ ] `index.html` 灰盒版（版面 + 狀態機 + 離線資料）
 - [ ] 串接 LLM API
 - [ ] Canvas 新聞圖卡

@@ -23,52 +23,62 @@
 
 ## 技術概要
 
-- 單一 `index.html`（HTML + CSS + JS），不需要後端
-- LLM：Groq（llama-3.1-8b-instant）或 Google Gemini，API Key 由玩家自己輸入，只存在瀏覽器
-- 沒有 Key 或 API 故障時，自動改用內建的離線資料，展演時一定能玩
-- 美術方向：像素 RPG × 社群介面（細節暫定，見 [美術設計規格書](docs/art/美術設計規格書.md)）
+- 單一 `index.html`（HTML + CSS + JS），不需要後端與 npm 建置
+- LLM：Groq（`llama-3.1-8b-instant`）或 Google Gemini，API Key 由玩家自己輸入，只存在瀏覽器 `localStorage`
+- 沒有 Key 或 API 故障時，自動改用內建的離線智囊庫，展演時一定能玩
+- 美術方向：像素 RPG × 社群介面（原則與決策見 [DESIGN.md](DESIGN.md)，細節見 [美術設計規格書](docs/art/美術設計規格書.md)）
 
 ## 專案結構
 
-```
+```text
 firestorm-pr-180s/
-├── README.md               專案首頁（本檔）
-├── CLAUDE.md               文件維護規則（給 AI 協作者與組員）
-├── index.html              遊戲本體（尚未建立）
+├── README.md                 專案首頁（本檔）
+├── AGENTS.md                 AI 協作與維護手冊（規範唯一真實來源）
+├── DESIGN.md                 美術與介面方向紀錄（已定／待決／否決／版本歷程）
+├── CLAUDE.md                 Claude Code 自動載入入口（指向 AGENTS.md）
+├── index.html                遊戲本體（尚未建立）
+├── .agents/skills/           開發、稽核與 Git 同步專屬 Skill 正本
+├── .claude/skills/           Claude Code 轉介檔（指向 .agents/skills/）
 └── docs/
-    ├── index.md            文件總目錄：每份文件一句話摘要
-    ├── log.md              討論與決策紀錄（只新增、不改寫）
-    ├── proposal/           企劃：為什麼做、玩什麼
-    ├── dev/                程式：狀態機、API、Prompt、Canvas
-    ├── art/                美術：風格、元件、素材、樣張
-    │   └── samples/        可直接開啟的風格樣張
-    ├── assets/             流程圖等圖片
-    └── archive/            早期原始稿（保留不改）
+    ├── index.md              文件總目錄：每份文件一句話摘要
+    ├── log.md                工作與決策紀錄（Append-only，只新增、不改寫）
+    ├── todo.md               待辦任務看板（TD-NNN；手機端指派入口，完成即刪）
+    ├── issues.md             未結問題清單（FP-NNN；已結案歸檔至 issues/closed/）
+    ├── proposal/             企劃：為什麼做、玩什麼
+    ├── dev/                  程式：狀態機、API、Prompt、Canvas
+    ├── art/                  美術：風格、元件、素材、樣張
+    │   └── samples/          可直接開啟的風格樣張
+    ├── assets/               流程圖等圖片
+    └── archive/              早期原始稿（只讀不改）
 ```
 
 ## 從哪裡開始讀
 
 | 你想知道 | 讀這份 |
 | :--- | :--- |
+| AI 怎麼接手開發、日誌／待辦／Git 規則 | [AGENTS.md](AGENTS.md) |
+| 現在還有哪些待辦可以指派（`TD-NNN`） | [docs/todo.md](docs/todo.md) |
+| 目前有哪些已知問題或規格衝突（`FP-NNN`） | [docs/issues.md](docs/issues.md) |
+| 美術定案了什麼、什麼方案已否決 | [DESIGN.md](DESIGN.md) |
 | 這個專案在做什麼、為什麼 | [docs/proposal/期末專案提案.md](docs/proposal/期末專案提案.md) |
 | 程式怎麼寫 | [docs/dev/實作規格書.md](docs/dev/實作規格書.md) |
-| 畫面長什麼樣子 | [docs/art/美術設計規格書.md](docs/art/美術設計規格書.md) |
-| 到目前為止決定了什麼 | [docs/log.md](docs/log.md) |
+| 畫面長什麼樣子（Design Token、像素規格） | [docs/art/美術設計規格書.md](docs/art/美術設計規格書.md) |
 | 全部文件清單 | [docs/index.md](docs/index.md) |
 
 ## 目前進度
 
 - [x] 提案與遊戲流程
 - [x] 程式實作規格書
-- [x] 美術設計規格書 v1（擬真介面方向）
+- [x] 美術設計規格書 v1（擬真介面方向，已封存）
 - [x] 美術風格改為像素 RPG，完成風格樣張 v1（[開啟樣張](docs/art/samples/像素風格樣張_v1.html)）
-- [x] 手機版排版 v2 樣張（[開啟樣張](docs/art/samples/像素風格樣張_v2.html)，待確認）
+- [x] 手機版排版 v2 樣張（[開啟樣張](docs/art/samples/像素風格樣張_v2.html)，待實機確認）
 - [x] 結局畫面（新聞卡、診斷書）像素版樣張 v3（[開啟樣張](docs/art/samples/像素風格樣張_v3.html)，待確認）
 - [x] 美術設計規格書改寫為像素 RPG 版本（v2，暫定）
-- [ ] `index.html` 灰盒版（版面 + 狀態機 + 離線資料）
-- [ ] 串接 LLM API
-- [ ] Canvas 新聞圖卡
-- [ ] Demo 影片與期末報告
+- [x] 導入結構化協作文件架構（`AGENTS.md`、`DESIGN.md`、`docs/todo.md`、`docs/issues.md`）與專屬 Skill 工具鏈
+- [ ] `index.html` 灰盒版（版面 + 狀態機 + 離線資料，對應 `TD-003`～`TD-005`）
+- [ ] 串接 LLM API（對應 `TD-006`）
+- [ ] Canvas 新聞圖卡與音效（對應 `TD-007`）
+- [ ] 手機實機測試與 GitHub Pages 部署、Demo 影片（對應 `TD-008`、`TD-009`）
 
 ## 授權與素材出處
 

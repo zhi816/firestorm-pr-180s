@@ -1,12 +1,23 @@
 # 文件總目錄
 
-所有文件的清單。新增、搬動或刪除文件時要同步更新這一頁（規則見 [CLAUDE.md](../CLAUDE.md)）。
+所有文件的清單。新增、搬動或刪除文件時要同步更新這一頁（規則見 [AGENTS.md](../AGENTS.md)）。
 
-## 紀錄
+## 協作與設計規範（根目錄）
 
 | 文件 | 摘要 |
 | :--- | :--- |
-| [log.md](log.md) | 依時間記下的討論與決策，含目前未決事項 |
+| [AGENTS.md](../AGENTS.md) | AI 協作與維護手冊：三層架構、核心紅線、接手順序、日誌／問題／待辦格式與 Git 協定 |
+| [DESIGN.md](../DESIGN.md) | 美術與介面方向紀錄：已定／暫定／待決／否決紀錄與版本歷程（動工前必讀） |
+| [CLAUDE.md](../CLAUDE.md) | Claude Code 自動載入入口與快速規則（指向 `AGENTS.md` 與 `.claude/skills/`） |
+| [README.md](../README.md) | 專案首頁、玩法簡介、架構總覽與目前進度清單 |
+
+## 紀錄與任務追蹤
+
+| 文件 | 摘要 |
+| :--- | :--- |
+| [log.md](log.md) | Append-only 工作與決策流水帳（不整份讀取，查詢用 `log_tail.py`） |
+| [todo.md](todo.md) | 尚未完成之待辦任務看板（`TD-NNN`），手機端指派任務入口，完成即刪 |
+| [issues.md](issues.md) | 尚未結案之缺陷與規格衝突清單（`FP-NNN`），已結案者歸檔於 `issues/closed/` |
 
 ## 企劃 `proposal/`
 
@@ -18,7 +29,7 @@
 
 | 文件 | 摘要 |
 | :--- | :--- |
-| [實作規格書.md](dev/實作規格書.md) | 單檔架構、狀態機、事件庫資料結構、System Prompt 與 JSON 格式、API 呼叫、三欄版面、Canvas 新聞卡、開發檢核清單 |
+| [實作規格書.md](dev/實作規格書.md) | 單檔架構、狀態機、事件庫資料結構、System Prompt 與 JSON 格式、API 呼叫、版面、Canvas 新聞卡、開發檢核清單 |
 
 ## 美術 `art/`
 

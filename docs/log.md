@@ -1,6 +1,6 @@
 # 討論與決策紀錄
 
-依時間排序，新的條目加在最下面，舊條目不改寫。格式和類型說明見 [CLAUDE.md](../CLAUDE.md)。
+依時間排序，新的條目加在最下面，舊條目不改寫。格式和類型說明見 [AGENTS.md](../AGENTS.md) 第六章第 2 節（2026-11-07 及以前之舊條目保留原格式不回溯修改）。
 
 ---
 
@@ -146,3 +146,9 @@
 - [ ] 開始做正式的 `index.html` 灰盒版（照美術規格書第三章 Token 與第九章版面）
 - [ ] 音效尚未在樣張實作
 - [ ] 手機實機測試專注寫稿模式（鍵盤）
+
+## [2026-11-25 00:21] rule | 導入結構化協作文件架構與開發技能工具鏈 | 全域
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：參照 Epoch-Kairos 專案架構，為本專案建立手機端指派與多 AI 接力協作架構：新增 `AGENTS.md`（核心規範、接手順序、日誌／問題／待辦格式與 Git 協定）、`DESIGN.md`（已定／暫定／待決／否決紀錄與版本歷程）、`docs/todo.md`（遷移既有待辦並拆解為 `TD-001` 至 `TD-009`）、`docs/issues.md` 與 `docs/issues/closed/`（登記 `FP-001` 追蹤 `docs/dev/實作規格書.md` 與像素 RPG v2 之規格落差）。改寫 `CLAUDE.md`、`docs/index.md`、`README.md` 與本檔檔頭索引。新增三個適配本專案單倉庫與尚未開工現況之專屬 Skill（`.agents/skills/` 正本與 `.claude/skills/` 轉介檔）：`git-sync-guardian`（移除雙倉庫、支援 `main` 與雲端功能分支、相容舊版日誌與 `FP-NNN`/`TD-NNN` 逐條暫存）、`project-audit`（`lint_project.py`、`issues_for.py`、`archive_issues.py`）與 `game-build-pipeline`（`pipeline_status.py`、`verify_app.js` 雙端瀏覽器檢查）。
+

@@ -152,3 +152,8 @@
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：參照 Epoch-Kairos 專案架構，為本專案建立手機端指派與多 AI 接力協作架構：新增 `AGENTS.md`（核心規範、接手順序、日誌／問題／待辦格式與 Git 協定）、`DESIGN.md`（已定／暫定／待決／否決紀錄與版本歷程）、`docs/todo.md`（遷移既有待辦並拆解為 `TD-001` 至 `TD-009`）、`docs/issues.md` 與 `docs/issues/closed/`（登記 `FP-001` 追蹤 `docs/dev/實作規格書.md` 與像素 RPG v2 之規格落差）。改寫 `CLAUDE.md`、`docs/index.md`、`README.md` 與本檔檔頭索引。新增三個適配本專案單倉庫與尚未開工現況之專屬 Skill（`.agents/skills/` 正本與 `.claude/skills/` 轉介檔）：`git-sync-guardian`（移除雙倉庫、支援 `main` 與雲端功能分支、相容舊版日誌與 `FP-NNN`/`TD-NNN` 逐條暫存）、`project-audit`（`lint_project.py`、`issues_for.py`、`archive_issues.py`）與 `game-build-pipeline`（`pipeline_status.py`、`verify_app.js` 雙端瀏覽器檢查）。
 
+
+## [2026-11-25 00:37] design | 建立樣張 v3 靜態參考圖包供其他 AI 參考 | #像素美術
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：Claude Opus 5.5（claude-opus-5-5）
+- **具體變更**：使用者反映 Artifact 預覽連結只有本人看得到，要求把目前設計版本與圖片放進專案資料夾供其他 AI 參考。新增 `docs/art/reference/`：由像素風格樣張 v3 以 Playwright 自動截圖產生 13 張 PNG（電腦版完整畫面、道歉影片兩種圖層、電腦版結局、手機版爆料／寫稿／公審／結局、四張 1280×720 新聞卡、角色與 6 種酸民頭像圖），另附 v3 可讀原始碼（字型為佔位字）與 `參考圖說明.md`（圖片清單、原始碼查找位置、給只能上傳圖片之 AI 的風格說明文字、重新產生方式）。同步更新 `docs/index.md`，並於 `DESIGN.md` 文件關係處加上參考圖包連結。未變更任何設計決策，lint ERROR 0、WARN 0。

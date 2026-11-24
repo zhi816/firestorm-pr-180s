@@ -1,0 +1,733 @@
+<title>炎上大作戰 像素樣張</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
+<style>
+@font-face{font-family:"Cubic11";src:url(data:font/woff2;base64,/*FONT*/) format("woff2");font-display:block}
+/* Layout: RPG battle screen — status | apology video + commands | comment stream, dialogue box underneath */
+:root{
+  color-scheme:dark;
+  --night:#0c1230; --panel:#18224c; --panel-2:#212e63; --hi:#34458a; --lo:#0f1738; --line:#04071a;
+  --ink:#eef1ff; --dim:#97a3d6; --gold:#f5b82e; --gold-hi:#ffe08a; --gold-lo:#b06f12;
+  --red:#ff4d5e; --flame:#ff8a1f; --cyan:#45d0ff; --pink:#ff6fae; --green:#4fdc7a;
+  --px:"Cubic11","Noto Sans TC",sans-serif; --long:var(--px);
+}
+body.long-normal{--long:"Noto Sans TC",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--px);font-size:12px;line-height:1.5;
+  background-image:radial-gradient(var(--hi) 1px,transparent 1px);background-size:12px 12px;
+  padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+.wrap{max-width:1200px;margin:0 auto;display:grid;gap:20px}
+
+/* pixel panel: notched outline + bevel */
+.pn{background:var(--panel);position:relative;
+  box-shadow:0 -4px 0 0 var(--line),0 4px 0 0 var(--line),-4px 0 0 0 var(--line),4px 0 0 0 var(--line),
+             inset 4px 4px 0 0 var(--hi),inset -4px -4px 0 0 var(--lo);padding:16px}
+.pn-title{display:inline-block;background:var(--panel-2);padding:2px 12px;font-size:12px;color:var(--gold);margin:-4px 0 12px;
+  box-shadow:0 -2px 0 0 var(--line),0 2px 0 0 var(--line),-2px 0 0 0 var(--line),2px 0 0 0 var(--line)}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px}
+.logo h1{margin:0;font-size:36px;line-height:1;font-weight:400;color:var(--ink);text-shadow:4px 4px 0 var(--red),8px 8px 0 var(--line)}
+.logo small{display:block;font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.1em}
+.timer{display:flex;align-items:center;gap:12px;padding:8px 16px}
+.timer b{font-size:36px;font-weight:400;font-variant-numeric:tabular-nums;color:var(--gold);line-height:1}
+.timer.hot b{color:var(--red);animation:pulse .5s steps(2) infinite}
+.timer span{color:var(--dim)}
+@keyframes pulse{50%{opacity:.35}}
+
+/* main grid */
+.stage{display:grid;grid-template-columns:270px minmax(0,1fr) 330px;gap:20px;align-items:start}
+.stage>*{min-width:0}
+.col{display:grid;gap:20px}
+
+/* status bars */
+.stat{display:grid;grid-template-columns:36px 1fr;gap:4px 8px;align-items:center;margin-bottom:12px}
+.stat .k{color:var(--dim)}
+.stat .v{grid-column:2;text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:16px;background:var(--line);padding:2px;box-shadow:inset 0 0 0 2px var(--lo)}
+.bar i{display:block;height:100%;transition:width .6s steps(12);
+  background:linear-gradient(var(--c) 0 50%,color-mix(in srgb,var(--c) 70%,#000) 50%)}
+.hp{--c:var(--green)} .hp.low{--c:var(--red)} .fl{--c:var(--flame)} .mp{--c:var(--cyan)}
+.delta{color:var(--red);height:18px;text-align:right}
+
+/* boss post */
+.boss .src{display:flex;gap:8px;align-items:center;color:var(--dim);margin-bottom:8px}
+.boss .src em{font-style:normal;background:var(--red);color:var(--ink);padding:0 6px}
+.boss h3{margin:0 0 8px;font-size:24px;font-weight:400;line-height:1.25;color:var(--gold);text-wrap:balance}
+.boss p{margin:0 0 12px;font-family:var(--long);font-size:13px;line-height:1.7;color:var(--ink)}
+.boss .meta{display:flex;gap:16px;color:var(--dim);border-top:2px dashed var(--hi);padding-top:8px}
+.q{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.q li{display:grid;grid-template-columns:20px 1fr;gap:6px;font-family:var(--long);font-size:13px;line-height:1.5}
+.q li::before{content:"";width:14px;height:14px;margin-top:2px;background:var(--line);box-shadow:inset 0 0 0 2px var(--dim)}
+
+/* video */
+.monitor{padding:12px}
+.screen{position:relative;background:#000;box-shadow:0 0 0 4px var(--line)}
+.screen canvas{width:100%;height:auto;aspect-ratio:16/9}
+.live{position:absolute;left:12px;top:12px;background:var(--red);color:var(--ink);padding:0 8px;font-size:12px}
+.sub{position:absolute;left:6%;right:6%;bottom:4%;text-align:center;font-size:18px;line-height:1.35;color:#fff;
+  text-shadow:2px 0 0 #000,-2px 0 0 #000,0 2px 0 #000,0 -2px 0 #000;text-wrap:balance}
+.screen.blackmode .sub{bottom:auto;top:50%;transform:translateY(-50%);font-size:24px}
+.scrub{display:flex;align-items:center;gap:12px;margin-top:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.scrub .bar{flex:1;height:12px}
+.scrub .bar i{--c:var(--red)}
+.vinfo{margin-top:12px;display:grid;gap:8px}
+.vinfo h2{margin:0;font-size:24px;font-weight:400;line-height:1.3}
+.chan{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--dim)}
+.chan canvas{width:36px;height:36px;box-shadow:0 0 0 2px var(--line)}
+.chan b{color:var(--ink);font-weight:400}
+.react{margin-left:auto;display:flex;gap:12px}
+.react span{background:var(--lo);padding:2px 10px}
+.react .bad{color:var(--red)}
+
+/* commands */
+.cmds{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:16px}
+.cmd{font:inherit;font-size:12px;color:var(--ink);background:var(--lo);border:0;padding:8px 10px 8px 26px;text-align:left;cursor:pointer;position:relative;
+  box-shadow:inset 0 0 0 2px var(--hi)}
+.cmd::before{content:"";position:absolute;left:10px;top:50%;width:8px;height:8px;margin-top:-4px;background:var(--hi)}
+.cmd[aria-pressed="true"]{background:var(--panel-2);color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
+.cmd[aria-pressed="true"]::before{background:var(--gold);clip-path:polygon(0 0,100% 50%,0 100%)}
+.cmd:focus-visible,.btn:focus-visible,.toggle button:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.cmd .tag{color:var(--dim);font-size:12px;display:block}
+label.lbl{display:flex;justify-content:space-between;color:var(--dim);margin-bottom:6px}
+textarea{width:100%;min-height:96px;resize:vertical;background:var(--line);color:var(--ink);border:0;padding:12px;
+  font-family:var(--long);font-size:15px;line-height:1.7;box-shadow:inset 0 0 0 2px var(--hi)}
+.acts{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.btn{font:inherit;font-size:24px;line-height:1;border:0;cursor:pointer;padding:14px 22px;color:var(--line);background:var(--gold);
+  box-shadow:0 -4px 0 0 var(--line),0 4px 0 0 var(--line),-4px 0 0 0 var(--line),4px 0 0 0 var(--line),
+             inset 4px 4px 0 0 var(--gold-hi),inset -4px -6px 0 0 var(--gold-lo)}
+.btn:active{transform:translateY(2px)}
+.btn.ghost{background:var(--panel-2);color:var(--ink);font-size:16px;
+  box-shadow:0 -4px 0 0 var(--line),0 4px 0 0 var(--line),-4px 0 0 0 var(--line),4px 0 0 0 var(--line),
+             inset 4px 4px 0 0 var(--hi),inset -4px -6px 0 0 var(--lo)}
+.btn.primary{flex:1}
+
+/* comments */
+.feed-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.feed-head .pn-title{margin-bottom:0}
+.feed-head span{color:var(--dim)}
+.feed{display:grid;gap:12px;max-height:760px;overflow:auto;padding:4px}
+.cm{display:grid;grid-template-columns:48px 1fr;gap:10px;background:var(--panel-2);padding:10px;
+  box-shadow:inset 0 0 0 2px var(--hi);animation:slide .4s steps(4) both}
+.cm canvas{width:48px;height:48px;box-shadow:0 0 0 2px var(--line)}
+.cm .who{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+.cm .who b{font-weight:400}
+.cm .who i{font-style:normal;font-size:12px;padding:0 6px;color:var(--line);background:var(--tc)}
+.cm .who time{color:var(--dim);margin-left:auto}
+.cm p{margin:0;font-family:var(--long);font-size:14px;line-height:1.65}
+.cm .foot{display:flex;justify-content:space-between;margin-top:6px;color:var(--dim)}
+.cm .foot .lk{color:var(--pink)}
+.cm .foot .dmg{color:var(--red)}
+@keyframes slide{from{transform:translateX(24px);opacity:0}}
+
+/* dialogue */
+.dlg{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;min-height:112px}
+.dlg canvas{width:72px;height:72px;box-shadow:0 0 0 4px var(--line)}
+.dlg p{margin:0;font-size:24px;line-height:1.5}
+.dlg p em{font-style:normal;color:var(--gold)}
+.dlg p .hurt{color:var(--red)}
+.dlg .more{position:absolute;right:20px;bottom:12px;width:12px;height:8px;background:var(--gold);clip-path:polygon(0 0,100% 0,50% 100%);animation:pulse .8s steps(2) infinite}
+
+/* notes under the sample */
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.notes h4{margin:0 0 8px;font-size:12px;color:var(--gold);font-weight:400}
+.notes p{margin:0;font-family:"Noto Sans TC",sans-serif;font-size:14px;line-height:1.75;color:var(--dim)}
+.toggle{display:flex;gap:0;margin-top:12px}
+.toggle button{font:inherit;font-size:12px;border:0;padding:6px 12px;cursor:pointer;background:var(--lo);color:var(--dim);box-shadow:inset 0 0 0 2px var(--hi)}
+.toggle button[aria-pressed="true"]{background:var(--gold);color:var(--line);box-shadow:none}
+
+.shake{animation:shake .3s steps(3)}
+@keyframes shake{25%{transform:translate(-6px,2px)}50%{transform:translate(6px,-2px)}75%{transform:translate(-3px,0)}}
+@media (prefers-reduced-motion:reduce){.shake,.cm,.timer.hot b,.dlg .more{animation:none}}
+
+@media (max-width:1080px){
+  .stage{grid-template-columns:minmax(0,1fr) 320px}
+  .stage .left{grid-column:1/-1;grid-template-columns:1fr 1fr;order:3}
+}
+/* ---------- ending ---------- */
+#result{display:none;--end:var(--flame)}
+body[data-view="result"] #result{display:block}
+.res-in{display:grid;gap:20px;max-width:1200px;margin:0 auto}
+.res-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 -4px 0 0 var(--line),0 4px 0 0 var(--line),-4px 0 0 0 var(--line),4px 0 0 0 var(--line),inset 0 0 0 4px var(--end)}
+.res-no{color:var(--end)}
+.res-head h2{margin:4px 0;font-size:36px;font-weight:400;line-height:1.2;color:var(--end);text-shadow:4px 4px 0 var(--line);text-wrap:balance}
+.res-head p{margin:0;font-family:var(--long);font-size:15px;color:var(--dim)}
+.res-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.res-grid>*{min-width:0}
+#newsImg{display:block;width:100%;height:auto;image-rendering:pixelated;box-shadow:0 0 0 4px var(--line)}
+.hint{margin:10px 0 0;color:var(--dim)}
+.doc{background:#efe6cf;color:#2a2238;padding:20px;position:relative;
+  box-shadow:0 -4px 0 0 var(--line),0 4px 0 0 var(--line),-4px 0 0 0 var(--line),4px 0 0 0 var(--line),inset -6px -6px 0 0 #d6c9a8}
+.doc-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;border-bottom:4px double #2a2238;padding-bottom:8px;margin-bottom:12px}
+.doc h3{margin:0;font-size:24px;font-weight:400}
+.doc-top span{color:#6b5f7a}
+.doc dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 12px}
+.doc dt{color:#6b5f7a}
+.doc dd{margin:0;font-family:var(--long);font-size:14px}
+.meter{display:grid;grid-template-columns:72px 1fr 52px;gap:8px;align-items:center;margin-bottom:8px}
+.meter .bar{height:14px;background:#2a2238;box-shadow:none}
+.meter .bar i{width:0}
+.meter b{font-weight:400;text-align:right;font-variant-numeric:tabular-nums}
+.doc h4{margin:16px 0 6px;font-size:12px;font-weight:400;color:#b8233a}
+.doc ol{margin:0;padding-left:20px;display:grid;gap:6px;font-family:var(--long);font-size:14px;line-height:1.6}
+.verdict{margin:0;font-size:18px;line-height:1.5}
+.doc-foot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:10px;border-top:2px dashed #b9ab88}
+.doc-foot b{font-weight:400;color:#b8233a}
+.res-acts{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.pick-lbl{color:var(--dim);margin-bottom:6px}
+.res-acts .toggle{margin-top:0;flex-wrap:wrap}
+@media (min-width:761px){
+  body[data-view="result"] #result{position:fixed;inset:0;z-index:30;overflow:auto;background:rgba(4,7,26,.97);
+    padding:24px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px))}
+}
+@media (max-width:900px){.res-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* phone-only parts are hidden on desktop */
+#hud,#tabs,.chat,#crisisCta,#auditActs{display:none}
+@media (max-width:760px){
+  /* Phone layout: fixed HUD on top, fixed RPG tabs at bottom, one game phase on screen at a time */
+  body{padding-block:calc(72px + env(safe-area-inset-top,0px)) calc(84px + env(safe-area-inset-bottom,0px));background-size:8px 8px}
+  header,#statPn,#feedPn{display:none}
+  .wrap{gap:16px}
+  .stage{grid-template-columns:minmax(0,1fr);gap:16px}
+  .stage .left,.stage .center{display:contents}
+  #bossPn,#qPn,.monitor,#cmdPn,.wrap>.dlg,.wrap>.notes{display:none}
+  body[data-view="crisis"] #bossPn,body[data-view="crisis"] #qPn{display:block}
+  body[data-view="crisis"] #crisisCta{display:block}
+  body[data-view="draft"] .monitor,body[data-view="draft"] #cmdPn{display:block}
+  body[data-view="audit"] .monitor{display:block}
+  body[data-view="audit"] .wrap>.dlg{display:grid}
+  body[data-view="audit"] #auditActs{display:flex}
+  body[data-view="help"] .wrap>.notes{display:grid}
+
+  /* HUD */
+  #hud{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 12px;align-items:center;position:fixed;inset:0 0 auto;z-index:20;
+    padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 12px max(12px,env(safe-area-inset-left,0px));
+    background:var(--panel);box-shadow:0 4px 0 0 var(--line),inset 0 -4px 0 0 var(--lo)}
+  #hud .clk{grid-row:1/3;font-size:24px;line-height:1;color:var(--gold);font-variant-numeric:tabular-nums}
+  #hud .clk.hot{color:var(--red);animation:pulse .5s steps(2) infinite}
+  #hud .lab{display:flex;justify-content:space-between;color:var(--dim);font-variant-numeric:tabular-nums}
+  #hud .lab b{font-weight:400;color:var(--ink)}
+  #hud .lab b.hurt{color:var(--red)}
+  #hud .bar{height:10px;padding:1px}
+
+  /* bottom tabs */
+  #tabs{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;inset:auto 0 0;z-index:20;gap:6px;
+    padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+    background:var(--panel);box-shadow:0 -4px 0 0 var(--line),inset 0 4px 0 0 var(--hi)}
+  #tabs button{font:inherit;font-size:12px;border:0;padding:10px 4px;cursor:pointer;color:var(--dim);background:var(--lo);position:relative;box-shadow:inset 0 0 0 2px var(--hi)}
+  #tabs button[aria-selected="true"]{background:var(--gold);color:var(--line);box-shadow:inset 0 -3px 0 0 var(--gold-lo)}
+  #tabs button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  #tabs .badge{position:absolute;top:-6px;right:4px;background:var(--red);color:var(--ink);padding:0 5px;font-size:12px;line-height:16px}
+  #tabs .badge:empty{display:none}
+
+  /* crisis */
+  #crisisCta{width:100%}
+  .boss h3{font-size:24px}
+
+  /* draft: compact video, compact commands */
+  body[data-view="draft"] .vinfo{display:none}
+  .cmds{grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+  .cmd{padding:8px 6px 8px 20px}
+  .cmd::before{left:7px}
+  .cmd .tag{display:none}
+  .btn{font-size:18px;padding:12px 16px}
+  /* typing focus mode: keep subtitle preview + textarea above the keyboard */
+  body.typing #cmdPn .cmds,body.typing #cmdPn .pn-title,body.typing .scrub{display:none}
+
+  /* audit: square live-stream view with chat over the video */
+  body[data-view="audit"] .screen canvas{aspect-ratio:1/1;object-fit:cover}
+  body[data-view="audit"] .sub{display:none}
+  body[data-view="audit"] .chat{display:flex}
+  .vinfo h2{font-size:18px}
+  .chan canvas{width:24px;height:24px}
+  .dlg{grid-template-columns:1fr;min-height:0;padding:14px 16px 20px}
+  .dlg canvas{display:none}
+  .dlg p{font-size:18px}
+  #auditActs{gap:12px}
+  #auditActs .btn{flex:1}
+  .notes{grid-template-columns:1fr}
+  .sub{font-size:12px;bottom:6%}
+  #replay,#toEnd{display:none}
+  body[data-view="result"] .wrap>:not(#result){display:none}
+  .res-head h2{font-size:24px}
+  #resClose{display:none}
+  .doc{padding:16px}
+  #again{width:100%}
+  .chat span{-webkit-line-clamp:1}
+}
+.chat{position:absolute;left:8px;right:22%;bottom:8px;flex-direction:column;gap:6px;pointer-events:none}
+.chat div{display:grid;grid-template-columns:16px 1fr;gap:6px;align-items:start;background:rgba(4,7,26,.78);padding:4px 8px 4px 4px;
+  font-size:12px;line-height:1.45;animation:rise .35s steps(3) both}
+.chat canvas{width:16px;height:16px}
+.chat b{font-weight:400;color:var(--tc)}
+.chat span{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+@keyframes rise{from{transform:translateY(12px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.chat div{animation:none}}
+</style>
+
+<div id="hud" aria-label="狀態">
+  <span class="clk" id="hudClk">02:47</span>
+  <div><div class="lab"><span>HP 粉絲</span><b id="hudHp">1,500,000</b></div><div class="bar hp" id="hudHpBar"><i style="width:100%"></i></div></div>
+  <div><div class="lab"><span>炎上</span><b id="hudFl">75%</b></div><div class="bar fl" id="hudFlBar"><i style="width:75%"></i></div></div>
+</div>
+<nav id="tabs" role="tablist" aria-label="畫面">
+  <button role="tab" data-v="crisis">爆料</button>
+  <button role="tab" data-v="draft">寫稿</button>
+  <button role="tab" data-v="audit">公審<span class="badge" id="tabBadge"></span></button>
+  <button role="tab" data-v="result">結局</button>
+  <button role="tab" data-v="help">說明</button>
+</nav>
+<div class="wrap" id="wrap">
+  <header>
+    <div class="logo">
+      <canvas id="logoFlame" width="10" height="12" style="width:40px;height:48px"></canvas>
+      <div><h1>炎上大作戰</h1><small>危機公關 180 秒 · 美術風格樣張 v3（結局畫面）</small></div>
+    </div>
+    <div class="pn timer" id="timer"><span>剩餘時間</span><b id="clock">02:47</b></div>
+  </header>
+
+  <div class="stage">
+    <!-- LEFT: status + boss -->
+    <div class="col left">
+      <section class="pn" id="statPn">
+        <div class="pn-title">狀態</div>
+        <div class="stat"><span class="k">HP</span><div class="bar hp" id="hpBar"><i style="width:100%"></i></div>
+          <span class="k"></span><span class="v"><span id="hpNum">1,500,000</span> 粉絲</span></div>
+        <div class="delta" id="hpDelta"></div>
+        <div class="stat"><span class="k">炎上</span><div class="bar fl" id="flBar"><i style="width:75%"></i></div>
+          <span class="k"></span><span class="v" id="flNum">75%</span></div>
+        <div class="stat" style="margin-bottom:0"><span class="k">MP</span><div class="bar mp"><i style="width:30%"></i></div>
+          <span class="k"></span><span class="v">廠商信任 30%</span></div>
+      </section>
+      <section class="pn boss" id="bossPn">
+        <div class="pn-title">BOSS 出現了！</div>
+        <div class="src"><em>爆料版</em><span>匿名網友 · 3 分鐘前</span></div>
+        <h3>自創潮牌驚爆淘寶貼牌</h3>
+        <p>標榜「100% 台灣原創」一件賣 1,680 元，被網友比對出淘寶同款只要 39 元人民幣，連簡體字吊牌都沒剪乾淨。</p>
+        <div class="meta"><span>▲ 3.2萬</span><span>轉發 8,412</span></div>
+      </section>
+      <section class="pn" id="qPn">
+        <div class="pn-title">網友三大質疑</div>
+        <ul class="q">
+          <li>到底是不是淘寶貼牌貨？</li>
+          <li>願不願意無條件全額退款？</li>
+          <li>為什麼在 IG 狂刪質疑留言？</li>
+        </ul>
+      </section>
+      <button class="btn" id="crisisCta">接招！開始寫聲明</button>
+    </div>
+
+    <!-- CENTER: apology video + commands -->
+    <div class="col center">
+      <section class="pn monitor">
+        <div class="screen" id="screen">
+          <canvas id="video" width="128" height="72"></canvas>
+          <span class="live">● LIVE</span>
+          <div class="chat" id="chat" aria-hidden="true"></div>
+          <div class="sub" id="sub"></div>
+        </div>
+        <div class="scrub"><span>▶</span><div class="bar"><i id="scrubBar" style="width:7%"></i></div><span id="scrubTime">0:13 / 3:00</span></div>
+        <div class="vinfo">
+          <h2>關於這幾天的事，我想好好說清楚</h2>
+          <div class="chan"><canvas id="chanAv" width="12" height="12"></canvas>
+            <span><b>小艾 Ivy</b> · 訂閱 <span id="subNum">1,500,000</span></span>
+            <div class="react"><span>讚 1.2萬</span><span class="bad" id="dislike">倒讚 38萬</span></div></div>
+        </div>
+      </section>
+      <section class="pn" id="cmdPn">
+        <div class="pn-title">指令：影片形式</div>
+        <div class="cmds" id="cmdsA"></div>
+        <div class="pn-title">指令：話術</div>
+        <div class="cmds" id="cmdsB"></div>
+        <label class="lbl" for="stmt"><span>聲明稿（字幕會即時預覽）</span><span id="count">0 字</span></label>
+        <textarea id="stmt">對於這次的事件，我真的感到非常抱歉。衣服確實是委託廠商生產，我們在品質把關上不夠嚴謹，造成大家的困擾。</textarea>
+        <div class="acts">
+          <button class="btn primary" id="publish">發布聲明（聽天由命）</button>
+          <button class="btn ghost" id="replay">重播公審</button>
+          <button class="btn ghost" id="toEnd">看結局</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: comment stream -->
+    <section class="pn" id="feedPn">
+      <div class="feed-head"><div class="pn-title">炎串 · 留言區</div><span id="cmCount">0 則</span></div>
+      <div class="feed" id="feed" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <section class="pn dlg" id="dlg">
+    <canvas id="dlgAv" width="12" height="12"></canvas>
+    <p id="dlgText">野生的 <em>【淘寶貼牌爆料】</em> 出現了！</p>
+    <span class="more"></span>
+  </section>
+  <div id="auditActs"><button class="btn ghost" id="withdraw">緊急撤回修改</button><button class="btn ghost" id="replay2">重播公審</button></div>
+
+  <section id="result" aria-label="結局">
+    <div class="res-in">
+      <div class="pn res-head">
+        <div><span class="res-no" id="resNo">ENDING 2 / 4</span>
+          <h2 id="resTitle">越描越黑，二度炎上！</h2>
+          <p id="resDesc"></p></div>
+        <button class="btn ghost" id="resClose">回到公審</button>
+      </div>
+      <div class="res-grid">
+        <section class="pn">
+          <div class="pn-title">突發新聞頭條</div>
+          <img id="newsImg" alt="突發新聞頭條圖卡" width="1280" height="720">
+          <p class="hint">長按或按右鍵就能把圖片存下來，分享到社群。</p>
+        </section>
+        <section class="doc" aria-label="AI 公關名醫診斷書">
+          <div class="doc-top"><h3>AI 公關名醫診斷書</h3><span>病歷號 FNN-0180</span></div>
+          <dl><dt>病患</dt><dd>小艾 Ivy（百萬 YouTuber）</dd><dt>診斷</dt><dd id="docDx"></dd></dl>
+          <div class="meter"><span>誠意分數</span><div class="bar" style="--c:var(--green)"><i id="mSin"></i></div><b id="mSinN"></b></div>
+          <div class="meter"><span>甩鍋指數</span><div class="bar" style="--c:var(--red)"><i id="mShi"></i></div><b id="mShiN"></b></div>
+          <h4 id="flawTitle">致命敗筆</h4>
+          <ol id="flaws"></ol>
+          <h4>名醫評語</h4>
+          <p class="verdict" id="verdict"></p>
+          <div class="doc-foot"><span>掉粉 <b id="docLost"></b></span><span>剩餘粉絲 <b id="docLeft"></b></span></div>
+        </section>
+      </div>
+      <div class="pn res-acts">
+        <div><div class="pick-lbl">預覽其他結局（樣張用）</div>
+          <div class="toggle" id="endPick" role="group" aria-label="預覽結局"></div></div>
+        <button class="btn" id="again">重新挑戰</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="notes">
+    <section class="pn"><h4>字型</h4>
+      <p>標題、數字、按鈕用中文像素字「俐方體 11 號」（免費授權）。長文字讀久會累，可以切換比較：</p>
+      <div class="toggle" role="group" aria-label="長文字字型">
+        <button id="fPx" aria-pressed="true">長文字也用像素字</button><button id="fNm" aria-pressed="false">長文字用一般字</button>
+      </div>
+    </section>
+    <section class="pn"><h4>角色與頭像</h4>
+      <p>網紅、律師、酸民頭像全部是程式畫的點陣圖，不用圖檔。試著點上面的「黑底白字」「素顏鞠躬」「律師在旁」「曬診斷書」，影片畫面會換圖層。</p>
+    </section>
+    <section class="pn"><h4>社群感從哪裡來</h4>
+      <p>留言卡保留「頭像＋暱稱＋內容＋愛心數」，粉絲＝HP、訂閱數、倒讚數、LIVE 標籤都是社群符號；酸民留言同時是 RPG 的攻擊訊息。</p>
+    </section>
+  </div>
+</div>
+
+<script>
+/* ---------- sprite helpers ---------- */
+const mirror = half => half.map(r => r + [...r].reverse().join(""));
+function draw(ctx, rows, pal, ox, oy){
+  rows.forEach((r,y)=>[...r].forEach((c,x)=>{ if(c!=="."&&pal[c]){ctx.fillStyle=pal[c];ctx.fillRect(ox+x,oy+y,1,1);} }));
+}
+const K="#1b1530";
+
+/* influencer, 28x28, mirrored halves */
+const IVY = mirror([
+".........kkkkk",".......kkhhhhh","......khhhHhhh",".....khhhHhhhh","....khhhhhhhhh","....khhhhhhhhh",
+"...khhhhhhhhhh","...khhhhshhhhs","...khhhsssssss","...khhssssssss","...khhskkkssss","...khhsseessss",
+"...khhssbbssss","...khhSsssssss","...khhSsssssss","...khhhSssssss","...khhhhSssssm","...khhhhkSSsss",
+"....khhhhkkSSS","....khhhhh.kss",".....khhhkkkss","..kwwwwwwwwwks",".kwwwwwwwwwwwk",".kwwwwwwwwwwww",
+"kwWwwwwwwwwwww","kwWwwwwwssssss","kwWwwwwsSSSSSS","kwWwwwwwwwwwww"]);
+// fix mirrored mouth row (frown): centre 2px on row 15, corners on row 16
+IVY[15] = IVY[15].slice(0,13)+"mm"+IVY[15].slice(15);
+IVY[16] = IVY[16].slice(0,12)+"m"+"ss"+"m"+IVY[16].slice(16);
+const IVY_PAL = {k:K,h:"#3b2a4a",H:"#6a5288",s:"#f2c6a0",S:"#d99e7e",e:K,b:"#b47a96",w:"#e8ecf4",W:"#aab3cf",m:"#8a3a3a",t:"#7fd3ff"};
+
+/* bowing: shirt + hair dome shifted down */
+function drawIvy(ctx, x, y, bow, pale){
+  const pal = {...IVY_PAL};
+  if(pale){ pal.s="#e6c9bd"; pal.S="#c9a79c"; pal.h="#3a3340"; pal.b="#9a6a88"; }
+  if(!bow){ draw(ctx, IVY, pal, x, y); ctx.fillStyle=pal.t; ctx.fillRect(x+18,y+13,1,2); return; }
+  draw(ctx, IVY.slice(20), pal, x, y+20);
+  const dome = IVY.slice(0,11).map(r=>r.replace(/[sSebkm]/g,(c,i)=> c==="k"?"k":"h"));
+  draw(ctx, dome, pal, x, y+11);
+}
+
+/* lawyer 20x22 */
+const LAW = mirror([
+"......kkkk","....kkhhhh","...khhhhhh","...khhhhhh","...khhssss","...khsssss","...kssssss","...kskkkkk",
+"...kskgegk","...kssssss","...kssssss","...kSsssmm","....kSssss",".....kkSSs","...kkddddw","..kdddddwr",
+".kddddddwr",".kdDddddwr",".kdDddddkr",".kdDdddddd",".kdDdddddd",".kdDdddddd"]);
+const LAW_PAL = {k:K,h:"#2a2a36",s:"#f0c39a",S:"#d29a72",g:"#bfe6ff",e:K,m:"#7a3a3a",d:"#2c3557",D:"#3f4b78",w:"#f4f4f4",r:"#d33a4a"};
+
+/* ---------- avatars 12x12 ---------- */
+const HEAD = mirror(["..kkkk",".khhhh","khhhhh","khssss","ksssss","ksssss","ksssss","ksssss",".kssss","..kkss","...kkk","kccccc"]);
+const PERSONAS = {
+  black: {bg:"#ff4d5e", pal:{h:"#2a2a36",c:"#2a2a36"}, px:[[2,4,K],[3,4,K],[4,5,K],[9,4,K],[8,4,K],[7,5,K],[3,6,K],[8,6,K],[4,8,"#8a2a2a"],[5,8,"#8a2a2a"],[6,8,"#8a2a2a"],[7,8,"#8a2a2a"],[2,7,"#ff8a8a"],[9,7,"#ff8a8a"]], tag:"激進黑粉"},
+  conan: {bg:"#45d0ff", pal:{h:"#5a3a22",c:"#1f3a7a"}, px:[[2,5,K],[3,5,K],[4,5,K],[7,5,K],[8,5,K],[9,5,K],[2,6,K],[3,6,"#bfe6ff"],[4,6,K],[7,6,K],[8,6,"#bfe6ff"],[9,6,K],[5,6,K],[6,6,K],[5,8,K],[6,8,K],[5,11,"#d33a4a"],[6,11,"#d33a4a"]], tag:"顯微鏡柯南"},
+  fan:   {bg:"#ff6fae", pal:{h:"#f2c94c",c:"#ff6fae"}, px:[[3,6,"#ff3f8e"],[8,6,"#ff3f8e"],[2,6,"#ff3f8e"],[9,6,"#ff3f8e"],[3,7,"#7fd3ff"],[8,7,"#7fd3ff"],[3,8,"#7fd3ff"],[8,8,"#7fd3ff"],[5,9,K],[6,9,K]], tag:"盲目死忠粉"},
+  meme:  {bg:"#f5b82e", pal:{h:"#4fdc7a",c:"#7a4fdc"}, px:[[3,5,K],[8,5,K],[5,7,"#ff3030"],[6,7,"#ff3030"],[3,8,K],[4,9,K],[5,9,"#fff"],[6,9,"#fff"],[7,9,K],[8,8,K]], tag:"迷因製造機"},
+  vendor:{bg:"#8f9bd0", pal:{h:"#55555f",c:"#3a3a48"}, px:[[3,6,K],[8,6,K],[2,5,"#55555f"],[3,5,"#55555f"],[8,5,"#55555f"],[9,5,"#55555f"],[4,9,K],[5,9,K],[6,9,K],[7,9,K],[5,11,"#f4f4f4"],[6,11,"#f4f4f4"]], tag:"昔日合作廠商"},
+  gossip:{bg:"#ff8a1f", pal:{h:"#a0522d",c:"#2f8a4a"}, px:[[3,6,K],[8,6,K],[4,8,K],[7,8,K],[5,9,K],[6,9,K],[10,8,"#3fbf5f"],[11,8,"#3fbf5f"],[10,9,"#ff4d5e"],[11,9,"#ff4d5e"],[11,7,"#3fbf5f"]], tag:"蹭流量八卦客"},
+  ivy:   {bg:"#34458a", pal:{h:"#3b2a4a",c:"#e8ecf4"}, px:[[3,6,K],[8,6,K],[3,7,"#b47a96"],[8,7,"#b47a96"],[5,9,"#8a3a3a"],[6,9,"#8a3a3a"]]}
+};
+function avatar(canvas, key){
+  const p = PERSONAS[key], ctx = canvas.getContext("2d");
+  ctx.fillStyle=p.bg; ctx.fillRect(0,0,12,12);
+  draw(ctx, HEAD, {k:K,s:"#f2c6a0",...p.pal}, 0, 0);
+  p.px.forEach(([x,y,c])=>{ctx.fillStyle=c;ctx.fillRect(x,y,1,1);});
+}
+
+/* flame icon */
+const FLAME=["....k.....","...kok....","...koyk...","..kooyk.k.",".koooyykok",".kooyyyyok","kooyyyyyok","kooyywyyok","kooyywwyok",".koyywwyk.",".kkooooKk.","..kkkkkk.."];
+draw(document.getElementById("logoFlame").getContext("2d"), FLAME, {k:K,K:K,o:"#ff4d5e",y:"#ff8a1f",w:"#ffe08a"},0,0);
+
+/* ---------- video screen ---------- */
+const tactics = {
+  A:[["black","黑底白字嘆氣","畫面全黑"],["bow","面容憔悴素顏鞠躬","換鞠躬圖"],["lawyer","律師在旁正襟危坐","加律師圖層"]],
+  B:[["refund","全額認錯無條件退款",""],["outsource","推給外包廠商把關不嚴",""],["paper","曬出身心科診斷書","道具圖層"],["sue","保留法律追訴權",""]]
+};
+const on = new Set(["outsource"]);
+const vctx = document.getElementById("video").getContext("2d");
+function renderVideo(){
+  const c=vctx, W=128, H=72, black=on.has("black");
+  document.getElementById("screen").classList.toggle("blackmode", black);
+  if(black){ c.fillStyle="#000"; c.fillRect(0,0,W,H); return; }
+  // wall with dithered bands
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const band = y<26?0:y<46?1:2, d=((x+y)%2===0)&&((y%26)<2);
+    c.fillStyle = ["#3a2f5c","#33294f","#2b2244"][band]; if(d) c.fillStyle="#463a70"; c.fillRect(x,y,1,1);
+  }
+  // shelf + plant + poster
+  c.fillStyle="#5a4632"; c.fillRect(6,20,30,2);
+  c.fillStyle="#2f8a4a"; c.fillRect(9,14,5,6); c.fillStyle="#4fdc7a"; c.fillRect(10,11,3,4);
+  c.fillStyle="#c8a46a"; c.fillRect(20,12,12,8); c.fillStyle="#ff6fae"; c.fillRect(21,13,10,6);
+  c.fillStyle="#1b1530"; c.fillRect(100,10,20,14); c.fillStyle="#ff4d5e"; c.fillRect(101,11,18,12);
+  c.fillStyle="#fff"; c.fillRect(108,14,2,5); c.fillRect(110,15,2,3);
+  // desk first, character's hands rest on it
+  c.fillStyle="#1b1530"; c.fillRect(0,57,W,1); c.fillStyle="#6b4a2e"; c.fillRect(0,58,W,14); c.fillStyle="#86603c"; c.fillRect(0,58,W,2);
+  // ring light behind
+  const cx=64, cy=30;
+  for(let a=0;a<360;a+=1){ const r=a*Math.PI/180;
+    for(const rr of [19,20,21]){ c.fillStyle= rr===20?"#fff6d0":"#ffe08a"; c.fillRect(Math.round(cx+Math.cos(r)*rr),Math.round(cy+Math.sin(r)*rr),1,1);} }
+  // character
+  const pale = on.has("bow");
+  c.save(); if(pale) c.filter="saturate(55%) brightness(92%)";
+  drawIvy(c, 50, 31, on.has("bow"), pale);
+  c.restore();
+  if(on.has("lawyer")) draw(c, LAW, LAW_PAL, 82, 36);
+  // mic
+  c.fillStyle="#1b1530"; c.fillRect(34,50,5,7); c.fillStyle="#666"; c.fillRect(35,51,3,5);
+  if(on.has("paper")){ c.fillStyle="#1b1530"; c.fillRect(77,46,13,12); c.fillStyle="#f4f4f4"; c.fillRect(78,47,11,10);
+    c.fillStyle="#d33a4a"; c.fillRect(79,48,4,1); c.fillStyle="#8f9bd0"; for(let i=0;i<3;i++) c.fillRect(79,50+i*2,8,1); }
+}
+function renderSub(){
+  const t = document.getElementById("stmt").value.trim();
+  document.getElementById("count").textContent = t.length + " 字";
+  const parts = t.split(/(?<=[。！？])/).filter(s=>s.trim());
+  let line = parts.length ? parts[parts.length-1] : "";
+  if(on.has("black")) line = "（深深嘆一口氣）" + (parts[0]||"");
+  document.getElementById("sub").textContent = line;
+}
+function buildCmds(){
+  for(const g of ["A","B"]){
+    const box=document.getElementById("cmds"+g);
+    tactics[g].forEach(([id,label,hint])=>{
+      const b=document.createElement("button"); b.className="cmd"; b.id="t-"+id;
+      b.setAttribute("aria-pressed", on.has(id)); b.innerHTML = label + (hint?`<span class="tag">${hint}</span>`:"");
+      b.onclick=()=>{ on.has(id)?on.delete(id):on.add(id); b.setAttribute("aria-pressed",on.has(id)); renderVideo(); renderSub(); };
+      box.appendChild(b);
+    });
+  }
+}
+
+/* ---------- comments / battle ---------- */
+const COMMENTS = [
+  {p:"black", name:"看到就倒胃口", skill:"退訂檢舉", text:"退訂了，順便檢舉。拿 39 塊人民幣的東西賣 1680，你怎麼不去搶？", likes:12800, dmg:128000, fl:6, eff:"效果絕佳！"},
+  {p:"conan", name:"鍵盤柯南", skill:"逐格放大", text:"放大 0:42，背景衣架上的吊牌還是簡體字。一邊道歉一邊在賣？", likes:5420, dmg:86000, fl:5, eff:"會心一擊！"},
+  {p:"fan", name:"永遠守護你", skill:"無腦護航", text:"哥哥不哭！！！錯的是工廠不是你！！！", likes:150, dmg:3000, fl:4, eff:"反而被群嘲了……"},
+  {p:"meme", name:"地獄梗產線", skill:"迷因化", text:"「把關不夠嚴謹」已加入今日梗圖素材庫，第一張在做了。", likes:8900, dmg:64000, fl:5, eff:"擴散中！"},
+  {p:"vendor", name:"行銷苦主", skill:"落井下石", text:"合作時連發票都要催三次。說把關不嚴，這句我信。", likes:4300, dmg:52000, fl:3, eff:"舊帳被翻出來了！"},
+  {p:"gossip", name:"吃瓜第一線", skill:"開台復盤", text:"今晚 9 點開台逐句分析這篇聲明，記得開小鈴鐺。", likes:3100, dmg:41000, fl:3, eff:"敵人增加了！"}
+];
+const fmt = n => n.toLocaleString("en-US");
+const short = n => n>=10000 ? (n/10000).toFixed(1).replace(".0","")+"萬" : fmt(n);
+let hp=1500000, fl=75, shown=0, timers=[];
+function setStats(lastDmg){
+  document.querySelector("#hpBar i").style.width = (hp/1500000*100)+"%";
+  document.getElementById("hpBar").classList.toggle("low", hp<1100000);
+  document.getElementById("hpNum").textContent = fmt(hp);
+  document.getElementById("subNum").textContent = fmt(hp);
+  document.querySelector("#flBar i").style.width = Math.min(fl,100)+"%";
+  document.getElementById("flNum").textContent = Math.min(fl,100)+"%";
+  document.getElementById("hpDelta").textContent = lastDmg ? "−"+fmt(lastDmg) : "";
+  document.querySelector("#hudHpBar i").style.width = (hp/1500000*100)+"%";
+  document.getElementById("hudHpBar").classList.toggle("low", hp<1100000);
+  const hh=document.getElementById("hudHp"); clearTimeout(hh._t); hh.textContent = fmt(hp); hh.classList.remove("hurt");
+  if(lastDmg && timers.length){ hh.textContent="−"+short(lastDmg); hh.classList.add("hurt"); hh._t=setTimeout(()=>{hh.textContent=fmt(hp);hh.classList.remove("hurt");},1200); }
+  document.querySelector("#hudFlBar i").style.width = Math.min(fl,100)+"%";
+  document.getElementById("hudFl").textContent = Math.min(fl,100)+"%";
+  document.getElementById("tabBadge").textContent = shown || "";
+  document.getElementById("cmCount").textContent = shown + " 則";
+  document.getElementById("dislike").textContent = "倒讚 " + (38+shown*7) + "萬";
+}
+function addComment(c, animate){
+  const el=document.createElement("article"); el.className="cm"; if(!animate) el.style.animation="none";
+  const per=PERSONAS[c.p];
+  el.innerHTML=`<canvas width="12" height="12"></canvas><div>
+    <div class="who"><b>${c.name}</b><i style="--tc:${per.bg}">${per.tag}</i><time>剛剛</time></div>
+    <p>${c.text}</p>
+    <div class="foot"><span class="lk">♥ ${short(c.likes)}</span><span class="dmg">粉絲 −${short(c.dmg)}</span></div></div>`;
+  avatar(el.querySelector("canvas"), c.p);
+  const feed=document.getElementById("feed"); feed.prepend(el);
+  const chat=document.getElementById("chat"), ch=document.createElement("div");
+  ch.innerHTML=`<canvas width="12" height="12"></canvas><span><b style="--tc:${per.bg}">${c.name}</b> ${c.text}</span>`;
+  if(!animate) ch.style.animation="none";
+  avatar(ch.querySelector("canvas"), c.p); chat.appendChild(ch);
+  while(chat.children.length>3) chat.firstElementChild.remove();
+  hp-=c.dmg; fl+=c.fl; shown++; setStats(c.dmg);
+  avatar(document.getElementById("dlgAv"), c.p);
+  document.getElementById("dlgText").innerHTML = `${per.tag} 使出了 <em>【${c.skill}】</em>！${c.eff} <span class="hurt">粉絲 −${fmt(c.dmg)}</span>`;
+  if(animate && c.dmg>50000 && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const w=document.querySelector(".stage"); w.classList.remove("shake"); void w.offsetWidth; w.classList.add("shake");
+  }
+}
+function battle(){
+  timers.forEach(clearTimeout); timers=[];
+  document.getElementById("feed").innerHTML=""; document.getElementById("chat").innerHTML=""; hp=1500000; fl=75; shown=0; setStats(0);
+  avatar(document.getElementById("dlgAv"), "ivy");
+  document.getElementById("dlgText").innerHTML = `小艾 發布了聲明！ <em>【推給外包】</em> ……網友正在輸入中`;
+  COMMENTS.forEach((c,i)=>timers.push(setTimeout(()=>addComment(c,true), 1400 + i*1500)));
+  const done=1400+COMMENTS.length*1500;
+  timers.push(setTimeout(()=>{ avatar(document.getElementById("dlgAv"),"ivy");
+    document.getElementById("dlgText").innerHTML=`公審結束！裁判長正在開立 <em>【診斷書】</em>……`; }, done));
+  timers.push(setTimeout(()=>{ showEnding("BACKFIRE"); setView("result"); }, done+1800));
+}
+
+/* ---------- endings ---------- */
+const ENDINGS = {
+  DESTROYED:{no:1,title:"身敗名裂，徹底封殺",desc:"掉粉破百萬，品牌商連夜解約求償，只能去夜市擺攤。",color:"#ff3b4f",stamp:"身敗名裂",tag:"獨家",
+    headline:"淘寶貼牌網紅道歉翻車！百萬粉絲一夜蒸發 品牌商連夜解約求償",dx:"全面迴避，裝死逃避",sin:12,shi:95,lost:1200000,
+    flawTitle:"致命敗筆",flaws:["三大質疑一個都沒回答，只有「很抱歉」。","把責任全推給廠商，還說要對造謠者提告。","發文後立刻關閉留言，坐實刪留言的指控。"],verdict:"通篇在演，沒有一句在答。"},
+  BACKFIRE:{no:2,title:"越描越黑，二度炎上！",desc:"道歉文被剪成迷因鬼畜瘋傳，「把關不嚴」登上年度流行語。",color:"#ff8a1f",stamp:"二度炎上",tag:"獨家",
+    headline:"自創潮牌驚爆淘寶貨！網紅道歉稿「把關不嚴」反成年度迷因",dx:"推諉卸責，避重就輕",sin:35,shi:85,lost:374000,
+    flawTitle:"致命敗筆",flaws:["第一句道歉，第二句就把品質問題推給廠商。","沒承認貼牌、沒提退款、沒解釋刪留言，三大質疑全部閃避。","「造成大家的困擾」是公關套話，網友早就免疫。"],verdict:"典型提油救火：道歉一句，甩鍋三句。"},
+  CONTROVERSIAL:{no:3,title:"黑紅也是紅，轉型爭議巨星",desc:"人設崩了，流量還在。改當狂暴系直播主，靠斗內翻身。",color:"#c86bff",stamp:"黑紅巨星",tag:"爭議",
+    headline:"淘寶網紅不退反進！開直播嗆黑粉「不爽別買」 斗內一晚破百萬",dx:"死不認錯，以戰養戰",sin:20,shi:60,lost:520000,
+    flawTitle:"致命敗筆",flaws:["完全不道歉，反過來嗆網友。","承認賺價差卻說「市場機制」，激怒消費者。"],verdict:"道德崩了，但流量是真的。"},
+  PERFECT:{no:4,title:"教科書級公關滅火",desc:"誠懇認錯、全額退款，粉絲逆勢回流，成為公關課的範例。",color:"#4fdc7a",stamp:"公關奇蹟",tag:"暖聞",
+    headline:"網紅坦承貼牌、宣布無條件全額退款 公開供應鏈 粉絲逆勢回流",dx:"正面回應，誠意滿分",sin:92,shi:5,lost:18000,
+    flawTitle:"做對的事",flaws:["第一段就承認是貼牌，沒有拐彎。","主動提出無條件全額退款與退款流程。","解釋刪留言的原因並恢復留言，接受批評。"],verdict:"三個質疑全部正面回答，這才叫道歉。"}
+};
+function wrapLines(c, text, maxW){
+  const lines=[]; let cur="";
+  for(const ch of text){ if(c.measureText(cur+ch).width>maxW && cur){ lines.push(cur); cur=ch; } else cur+=ch; }
+  if(cur) lines.push(cur); return lines;
+}
+async function drawCard(e, key){
+  await Promise.all([document.fonts.load('12px "Cubic11"',"測"),document.fonts.load('24px "Cubic11"',"測")]);
+  const W=320,H=180, card=document.createElement("canvas"); card.width=W; card.height=H;
+  const c=card.getContext("2d"); c.imageSmoothingEnabled=false; c.textBaseline="top";
+  c.fillStyle="#101a3f"; c.fillRect(0,0,W,H);
+  c.fillStyle="#16224d"; for(let y=20;y<136;y+=6) c.fillRect(0,y,W,1);
+  // top bar
+  c.font='12px "Cubic11"';
+  c.fillStyle="#d8263a"; c.fillRect(0,0,W,16); c.fillStyle="#ffe08a"; c.fillRect(0,0,c.measureText("突發 BREAKING").width+8,16); c.fillStyle="#101a3f"; c.fillText("突發 BREAKING",4,2);
+  c.fillStyle="#fff"; c.textAlign="right"; c.fillText("炎上新聞台 FNN  ● LIVE",W-6,2); c.textAlign="left";
+  // portrait
+  c.fillStyle="#e8ecf4"; c.fillRect(8,24,100,104); c.fillStyle="#2b2244"; c.fillRect(10,26,96,100);
+  const off=document.createElement("canvas"); off.width=28; off.height=28; const o=off.getContext("2d");
+  drawIvy(o,0,0,false,false);
+  if(key==="CONTROVERSIAL"){ o.fillStyle="#04071a"; o.fillRect(7,10,14,3); o.fillStyle="#45d0ff"; o.fillRect(8,11,2,1); o.fillRect(17,11,2,1); }
+  if(key==="PERFECT"){ o.fillStyle="#f2c6a0"; [[13,15],[14,15],[12,16],[15,16],[18,13],[18,14]].forEach(([x,y])=>o.fillRect(x,y,1,1));
+    o.fillStyle="#8a3a3a"; [[12,15],[15,15],[13,16],[14,16]].forEach(([x,y])=>o.fillRect(x,y,1,1)); }
+  if(key==="DESTROYED"){ const d=o.getImageData(0,0,28,28); for(let i=0;i<d.data.length;i+=4){const g=(d.data[i]*.3+d.data[i+1]*.59+d.data[i+2]*.11)|0; d.data[i]=d.data[i+1]=d.data[i+2]=g;} o.putImageData(d,0,0); }
+  c.drawImage(off,16,42,84,84);
+  c.fillStyle="#04071a"; c.fillRect(10,112,96,14); c.fillStyle="#fff"; c.fillText("小艾 Ivy",14,113);
+  // tag + headline
+  c.font='12px "Cubic11"'; const tw=c.measureText(e.tag).width+8;
+  c.fillStyle="#d8263a"; c.fillRect(116,24,tw,16); c.fillStyle="#fff"; c.fillText(e.tag,120,26);
+  const lines=wrapLines(c,e.headline,188).slice(0,4);
+  c.fillStyle="#ffd23f"; c.fillRect(116,42,196,8+lines.length*16);
+  c.fillStyle="#101a3f"; lines.forEach((l,i)=>c.fillText(l,120,46+i*16));
+  // stamp
+  c.save(); c.translate(262,104); c.rotate(-0.22);
+  c.strokeStyle=e.color; c.lineWidth=3; c.strokeRect(-50,-18,100,36); c.lineWidth=1; c.strokeRect(-46,-14,92,28);
+  c.font='24px "Cubic11"'; c.fillStyle=e.color; c.textAlign="center"; c.textBaseline="middle"; c.fillText(e.stamp,0,1);
+  c.restore(); c.textBaseline="top"; c.textAlign="left";
+  // stats bar
+  c.fillStyle="#0b1230"; c.fillRect(0,136,W,20); c.font='12px "Cubic11"';
+  let x=6; const seg=(t,col)=>{ c.fillStyle=col; c.fillText(t,x,140); x+=c.measureText(t).width; };
+  seg("掉粉 ","#97a3d6"); seg("−"+fmt(e.lost),"#ff4d5e"); seg("  剩餘 ","#97a3d6"); seg(fmt(1500000-e.lost),"#fff");
+  seg("  誠意 ","#97a3d6"); seg(e.sin+"/100","#ffe08a");
+  // ticker
+  c.fillStyle="#f4f4f4"; c.fillRect(0,156,W,24); c.fillStyle="#d8263a"; c.fillRect(0,156,62,24);
+  c.fillStyle="#fff"; c.fillText("名醫診斷",6,162);
+  c.save(); c.beginPath(); c.rect(66,156,W-66,24); c.clip(); c.fillStyle="#101a3f"; c.fillText(e.verdict,70,162); c.restore();
+  // export ×4 as a crisp image people can long-press to save
+  const big=document.createElement("canvas"); big.width=1280; big.height=720; const b=big.getContext("2d");
+  b.imageSmoothingEnabled=false; b.drawImage(card,0,0,1280,720);
+  document.getElementById("newsImg").src=big.toDataURL("image/png");
+}
+let endKey="BACKFIRE";
+function showEnding(key){
+  endKey=key; const e=ENDINGS[key];
+  const r=document.getElementById("result"); r.style.setProperty("--end", e.color);
+  document.getElementById("resNo").textContent=`ENDING ${e.no} / 4`;
+  document.getElementById("resTitle").textContent=e.title;
+  document.getElementById("resDesc").textContent=e.desc;
+  document.getElementById("docDx").textContent=e.dx;
+  document.getElementById("mSin").style.width=e.sin+"%"; document.getElementById("mSinN").textContent=e.sin+"/100";
+  document.getElementById("mShi").style.width=e.shi+"%"; document.getElementById("mShiN").textContent=e.shi+"/100";
+  document.getElementById("flawTitle").textContent=e.flawTitle;
+  document.getElementById("flaws").innerHTML=e.flaws.map(f=>`<li>${f}</li>`).join("");
+  document.getElementById("verdict").textContent="「"+e.verdict+"」";
+  document.getElementById("docLost").textContent="−"+fmt(e.lost);
+  document.getElementById("docLeft").textContent=fmt(1500000-e.lost);
+  document.querySelectorAll("#endPick button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.k===key));
+  drawCard(e,key);
+}
+const pick=document.getElementById("endPick");
+Object.entries(ENDINGS).forEach(([k,e])=>{ const b=document.createElement("button"); b.dataset.k=k; b.textContent=e.stamp; b.onclick=()=>showEnding(k); pick.appendChild(b); });
+
+/* ---------- clock (sample only) ---------- */
+let sec=167;
+setInterval(()=>{ sec = sec>0 ? sec-1 : 180;
+  document.getElementById("clock").textContent = String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0");
+  document.getElementById("timer").classList.toggle("hot", sec<=30);
+  const hc=document.getElementById("hudClk"); hc.textContent=document.getElementById("clock").textContent; hc.classList.toggle("hot", sec<=30);
+  const played = 180-sec; document.getElementById("scrubBar").style.width=(played/180*100)+"%";
+  document.getElementById("scrubTime").textContent = Math.floor(played/60)+":"+String(played%60).padStart(2,"0")+" / 3:00";
+},1000);
+
+/* ---------- font toggle ---------- */
+function setFont(normal){
+  document.body.classList.toggle("long-normal", normal);
+  document.getElementById("fPx").setAttribute("aria-pressed", !normal);
+  document.getElementById("fNm").setAttribute("aria-pressed", normal);
+}
+document.getElementById("fPx").onclick=()=>setFont(false);
+document.getElementById("fNm").onclick=()=>setFont(true);
+
+/* ---------- boot: open in a mid-battle state ---------- */
+avatar(document.getElementById("chanAv"), "ivy");
+buildCmds(); renderVideo(); renderSub();
+document.getElementById("stmt").addEventListener("input", renderSub);
+COMMENTS.slice(0,3).forEach(c=>addComment(c,false));
+function setView(v){
+  document.body.dataset.view=v;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.v===v));
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>setView(b.dataset.v));
+document.getElementById("crisisCta").onclick=()=>setView("draft");
+const startBattle=()=>{ setView("audit"); battle(); };
+document.getElementById("publish").onclick=startBattle;
+document.getElementById("replay").onclick=startBattle;
+document.getElementById("replay2").onclick=startBattle;
+document.getElementById("withdraw").onclick=()=>{ timers.forEach(clearTimeout); timers=[]; setView("draft");
+  document.getElementById("dlgText").innerHTML=`影片已設為私人。照 AI 挑出的毛病修改後，再發布一次。`; };
+const stmt=document.getElementById("stmt");
+stmt.addEventListener("focus",()=>document.body.classList.add("typing"));
+stmt.addEventListener("blur",()=>setTimeout(()=>document.body.classList.remove("typing"),200));
+document.getElementById("toEnd").onclick=()=>setView("result");
+document.getElementById("resClose").onclick=()=>setView("audit");
+document.getElementById("again").onclick=()=>{ timers.forEach(clearTimeout); timers=[]; sec=180; setView("crisis"); };
+document.addEventListener("keydown",ev=>{ if(ev.key==="Escape" && document.body.dataset.view==="result") setView("audit"); });
+showEnding("BACKFIRE");
+setView("crisis");
+</script>

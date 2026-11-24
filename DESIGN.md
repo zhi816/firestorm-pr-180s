@@ -6,7 +6,7 @@
 
 **與其他文件的關係**
 - 詳細的設計變數數值（Design Tokens）、字級表、點陣角色像素矩陣與元件 CSS 做法，以 [`docs/art/美術設計規格書.md`](./docs/art/美術設計規格書.md) 為準。
-- 最新可互動視覺基準為 [`docs/art/samples/像素風格樣張_v3.html`](./docs/art/samples/像素風格樣張_v3.html)。
+- 最新可互動視覺基準為 [`docs/art/samples/像素風格樣張_v3.html`](./docs/art/samples/像素風格樣張_v3.html)；不方便執行網頁時，看靜態參考圖包 [`docs/art/reference/參考圖說明.md`](./docs/art/reference/參考圖說明.md)（各階段截圖、新聞卡、角色圖與可讀原始碼）。
 - 程式狀態機、事件庫 JSON 與 API 呼叫規格，見 [`docs/dev/實作規格書.md`](./docs/dev/實作規格書.md)。
 
 **狀態標記**：`[已定]` 使用者明確同意 ｜ `[暫定]` 目前主案，可再調整 ｜ `[待決]` 尚未決定 ｜ `[否決]` 已排除，勿再提

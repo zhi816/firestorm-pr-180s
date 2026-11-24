@@ -152,3 +152,8 @@
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：參照 Epoch-Kairos 專案架構，為本專案建立手機端指派與多 AI 接力協作架構：新增 `AGENTS.md`（核心規範、接手順序、日誌／問題／待辦格式與 Git 協定）、`DESIGN.md`（已定／暫定／待決／否決紀錄與版本歷程）、`docs/todo.md`（遷移既有待辦並拆解為 `TD-001` 至 `TD-009`）、`docs/issues.md` 與 `docs/issues/closed/`（登記 `FP-001` 追蹤 `docs/dev/實作規格書.md` 與像素 RPG v2 之規格落差）。改寫 `CLAUDE.md`、`docs/index.md`、`README.md` 與本檔檔頭索引。新增三個適配本專案單倉庫與尚未開工現況之專屬 Skill（`.agents/skills/` 正本與 `.claude/skills/` 轉介檔）：`git-sync-guardian`（移除雙倉庫、支援 `main` 與雲端功能分支、相容舊版日誌與 `FP-NNN`/`TD-NNN` 逐條暫存）、`project-audit`（`lint_project.py`、`issues_for.py`、`archive_issues.py`）與 `game-build-pipeline`（`pipeline_status.py`、`verify_app.js` 雙端瀏覽器檢查）。
 
+
+## [2026-11-25 01:04] spec | 遊戲流程 v2 定案：選角色、裁決頁、前端計分與 10 則事件 | 全域
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：與使用者討論後定案遊戲流程 v2：開場自選 4 位角色、讀爆料不計時、寫稿起算 180 秒且送審等待時暫停、新增裁決頁、緊急撤回限 1 次並加「截圖已流出」懲罰、LLM 只判讀而由前端固定公式計分、離線關鍵字判讀、隱藏結局「被抓包 AI 代寫」、LLM 改用 Command Code Provider API（已實測 CORS 可由瀏覽器直接呼叫）。調性定為荒謬搞笑、長文字定為 Noto Sans TC、新聞卡一鍵下載加長按存圖、音效電腦預設開手機預設靜音。新增 `docs/dev/角色與事件庫.md`（4 位角色、10 則標準事件）；改寫 `docs/dev/實作規格書.md`（修正 `FP-001`）；更新提案、美術設計規格書、`DESIGN.md`、`AGENTS.md` 紅線（允許可選的 `worker/` 中繼程式）、`README.md`、`docs/index.md`、`pipeline_status.py` 檢核條件；新增 `.gitignore`。完成並刪除 `TD-001`、`TD-002`；更新 `TD-003` 至 `TD-009`；新增 `TD-010`（角色選擇）、`TD-011`（計分與離線判讀）、`TD-012`（Cloudflare Worker 中繼，使用者指示排入之後）。

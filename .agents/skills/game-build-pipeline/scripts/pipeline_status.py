@@ -69,11 +69,11 @@ def main():
         check_step('P1 像素 Design Tokens 與字型 (--night / --gold / Cubic11)',
                    '--night' in app_txt and '--gold' in app_txt and 'Cubic' in app_txt)
         check_step('P2 狀態機與 Reflection 撤回閉環 (STATE_REVISE)',
-                   all(s in app_txt for s in ('STATE_TITLE', 'STATE_CRISIS', 'STATE_AUDITING', 'STATE_REVISE', 'STATE_RESULT')))
+                   all(s in app_txt for s in ('STATE_TITLE', 'STATE_SELECT', 'STATE_CRISIS', 'STATE_AUDITING', 'STATE_VERDICT', 'STATE_REVISE', 'STATE_RESULT')))
         check_step('P3 事件庫與點陣圖層/角色 Canvas',
                    'CRISIS_EVENTS' in app_txt or ('inquiries' in app_txt and '<canvas' in app_txt.lower()))
         check_step('P4 LLM API 串接與離線 Fallback',
-                   ('api.groq.com' in app_txt or 'generativelanguage.googleapis.com' in app_txt)
+                   ('api.commandcode.ai' in app_txt or 'workers.dev' in app_txt)
                    and ('fallback' in app_txt.lower() or 'offline' in app_txt.lower()))
         check_step('P5 結局新聞卡 (320x180) 與 Web Audio 音效',
                    ('ENDING_PERFECT' in app_txt and 'ENDING_DESTROYED' in app_txt)

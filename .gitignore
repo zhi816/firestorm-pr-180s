@@ -1,0 +1,14 @@
+# macOS 系統自動產生之資料夾設定檔
+.DS_Store
+
+# Python 執行腳本時自動產生之位元組碼快取
+__pycache__/
+
+# 本機環境變數與金鑰（API Key 絕不進版控）
+.env
+.env.*
+.dev.vars
+
+# Cloudflare Worker 本機建置與暫存
+worker/.wrangler/
+worker/node_modules/

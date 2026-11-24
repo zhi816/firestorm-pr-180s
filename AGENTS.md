@@ -28,6 +28,7 @@ firestorm-pr-180s/
 ├── CLAUDE.md                  # Claude Code 自動載入入口（指向本檔與 .claude/skills/）
 ├── README.md                  # 專案首頁、玩法簡介與整體進度清單
 ├── index.html                 # 【展示與應用層】遊戲正式本體（純前端單檔，部署於 GitHub Pages；待建立）
+├── worker/                    # 可選的 Cloudflare Worker 中繼程式（代管 API 金鑰；待建立，見 TD-012）
 ├── .agents/skills/            # 專屬 Skill 正本（見第四章）
 ├── .claude/skills/            # 供 Claude Code（含手機／網頁版）載入之轉介檔，內容指向 .agents/skills/ 正本
 └── docs/                      # 【知識與協作層】
@@ -37,7 +38,7 @@ firestorm-pr-180s/
     ├── issues/closed/         # 已結案問題歸檔（由 archive_issues.py 統一搬移，只追加）
     ├── todo.md                # 待辦任務看板（TD-NNN；手機端指派入口，完成即刪）
     ├── proposal/              # 企劃：動機、玩法、課堂理論對應（Reflection / Multi-Agent）
-    ├── dev/                   # 程式：狀態機、事件庫結構、LLM Prompt、JSON、Fallback、Canvas
+    ├── dev/                   # 程式：狀態機、計分公式、角色與事件庫、LLM Prompt、JSON、離線模式、Canvas
     ├── art/                   # 美術：像素 RPG 規格書與互動樣張（samples/）
     ├── assets/                # 流程圖與技術架構圖
     └── archive/               # 【原始資料層】早期提案與 v1 規格書（唯讀，嚴禁修改）
@@ -53,11 +54,11 @@ firestorm-pr-180s/
 
 ## 三、遊戲核心紅線（開發時不可違反）
 
-1. **單檔零後端架構**：正式遊戲只存在於根目錄 `index.html`，不依賴外部建置工具（Vite/Webpack）或第三方圖片/音檔。
+1. **單檔遊戲本體＋可選中繼**：正式遊戲只存在於根目錄 `index.html`，不依賴外部建置工具（Vite/Webpack）或第三方圖片/音檔。唯一允許的後端是 `worker/` 內的 Cloudflare Worker 中繼程式（代管 API 金鑰、組裝 Prompt、限流），遊戲在沒有它時仍須完整可玩（2026-11-25 使用者同意）。
 2. **品牌與素材版權原則**：所有新聞台、社群平台與人物一律虛構——新聞台為 **炎上新聞台 FNN**、社群為 **炎串**、爆料來源為 **爆料版**。嚴禁出現真實台標、Logo、真人照片（`docs/proposal/` 或 `docs/dev/` 早期草稿殘留之真實品牌字樣應依 `FP-001` 清理）。
 3. **像素 RPG × 社群世界觀**：場景道具一律使用現代物件（手機、補光燈、麥克風、桌椅），不用奇幻城堡寶劍；角色與頭像由程式繪製點陣圖。
-4. **雙引擎與展演保底**：API Key（Groq / Gemini）僅存瀏覽器 `localStorage`，絕不進版控；必須具備 Markdown 代碼塊清洗、空白輸入神隱判定，以及斷網/限流時無縫切換的離線智囊庫（Fallback Cache）。
-5. **Human-in-the-loop Reflection 閉環**：必須實作 `STATE_REVISE`（「緊急撤回修改」），讓玩家看到 AI 裁判挑錯後能於剩餘時間內修正聲明再送審。
+4. **金鑰安全與離線保底**：LLM 只串接 Command Code Provider API；金鑰只能存在 Worker 加密變數或玩家瀏覽器 `localStorage`，絕不寫入任何受版控檔案。AI 只負責判讀與演出文字，數值與結局由前端固定公式計算；必須具備 Markdown 代碼塊清洗、空白與敷衍輸入判定，以及無 Key／斷網／限流時無縫切換的離線模式（關鍵字判讀＋同一套公式）。
+5. **Human-in-the-loop Reflection 閉環**：必須實作 `STATE_VERDICT` 裁決頁與 `STATE_REVISE`（「緊急撤回修改」，每局限 1 次），讓玩家看到 AI 裁判挑錯後能於剩餘時間內修正聲明再送審。
 6. **雙端體驗與無障礙**：電腦版（>1080px）維持三欄一次看完；手機版（<=760px）採階段式單屏切換（頂部狀態列＋底部分頁＋直播聊天室），無橫向捲軸；所有互動元件具 `--cyan` 2px 鍵盤焦點框並支援 `prefers-reduced-motion`。
 
 ---

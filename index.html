@@ -323,6 +323,10 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   body[data-view="crisis"] #bossPn,body[data-view="crisis"] #qPn{display:block !important}
   body[data-view="draft"] .monitor,body[data-view="audit"] .monitor{display:block !important}
   body[data-view="audit"] #dlg,body[data-view="verdict"] #dlg{display:grid !important}
+  body[data-view="verdict"] #feedPn{display:block;overflow-x:hidden}
+  body[data-view="verdict"] #feedPn .feed{max-height:none;overflow:visible;padding:0}
+  #apiNote{min-height:0;margin-top:0}
+  #apiNote:empty{display:none}
   body[data-view="result"] .stage,body[data-view="result"] #dlg{display:none !important}
   #crisisCta{width:100%}
   .title-main h2{font-size:24px}
@@ -540,7 +544,6 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
         <div id="verdictBtns">
           <button class="btn" id="withdraw" type="button">緊急撤回（剩 <span id="withdrawLeft">0</span> 秒）</button>
           <button class="btn" id="accept" type="button">認了，看結局</button>
-          <button class="btn ghost" id="toFeed" type="button">看留言</button>
         </div>
       </section>
       <div class="api-note" id="apiNote" aria-live="polite"></div>
@@ -2064,7 +2067,6 @@ function boot(){
   $("helper").onclick = ()=>{ G.helperUsed=true; $("stmt").value=HELPER_TEXT; renderSub(); Sound.click(); dlg(`官腔小幫手登場！套話已填好……<span class="hurt">（使用後誠意 −15）</span>`); };
   $("withdraw").onclick = revise;
   $("accept").onclick = acceptVerdict;
-  $("toFeed").onclick = ()=>setView("audit");
   const openSheet = ()=>{ document.body.classList.add("sheet"); $("feed").scrollTop=0; $("feedClose").focus(); };
   $("chatAll").onclick = openSheet; $("chat").onclick = openSheet;
   $("feedClose").onclick = ()=>{ document.body.classList.remove("sheet"); $("chatAll").focus(); };

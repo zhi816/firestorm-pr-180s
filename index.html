@@ -361,6 +361,7 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   #verdictBtns{flex-direction:column}
   .long-lbl{display:none}
 }
+#cmdsA,#cmdsB{grid-template-columns:1fr 1fr}
 
 </style>
 </head>
@@ -590,16 +591,6 @@ const CHARACTERS = {
                 rule:"食安事件掉粉 ×1.5；提出停業或公開檢驗時炎上度 -10", channel:"饅頭吃什麼"}
 };
 
-const TACTICS = [
-  {id:"TACTIC_BLACK",    group:"form", label:"黑底白字嘆氣開頭", hint:"畫面全黑"},
-  {id:"TACTIC_BOW",      group:"form", label:"面容憔悴素顏鞠躬", hint:"換鞠躬圖"},
-  {id:"TACTIC_LAWYER",   group:"form", label:"律師在旁正襟危坐", hint:"加律師圖層"},
-  {id:"TACTIC_REFUND",   group:"talk", label:"全額認錯無條件退款", hint:"誠意 +10，但要寫出來"},
-  {id:"TACTIC_OUTSOURCE",group:"talk", label:"推給外包廠商把關不嚴", hint:"甩鍋 +25"},
-  {id:"TACTIC_MEDICAL",  group:"talk", label:"曬出近期身心科診斷書", hint:"甩鍋 +10"},
-  {id:"TACTIC_SUE",      group:"talk", label:"揚言對造謠者保留法律追訴權", hint:"紅旗：威脅提告"}
-];
-
 /* 留言人設順序固定：顯微鏡柯南、激進黑粉、盲目死忠粉、昔日合作廠商、蹭流量八卦客、迷因製造機 */
 const PERSONA_ORDER = ["conan","black","fan","vendor","gossip","meme"];
 
@@ -609,7 +600,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"到底是不是貼牌貨？", keywords:["承認","貼牌","代工","同款","不是原創"]},
               {q:"願不願意全額退款？", keywords:["退款","退費","全額","賠償","退貨"]},
               {q:"為什麼瘋狂刪質疑留言？", keywords:["刪留言","刪文","刪除留言","封鎖","恢復留言","留言"]}],
-   tactic_overrides:{TACTIC_OUTSOURCE:{shirking:35}},
    offline_comments:[
      "放大 0:42，衣架上的吊牌還寫著「洗滌請用冷水」。原創到連吊牌都是進口的？",
      "1,680 買 39 元，你怎麼不去搶？退訂了，順便檢舉。",
@@ -622,7 +612,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"對話紀錄是不是真的？", keywords:["屬實","承認","是真的","對話紀錄","確實"]},
               {q:"有沒有挪用粉絲禮物？", keywords:["禮物","蛋糕","歸還","粉絲送的"]},
               {q:"純情人設是不是演的？", keywords:["人設","演的","經營","真實的我","包裝"]}],
-   tactic_overrides:{TACTIC_SUE:{extra_flag:"threat_lawsuit"}},
    offline_comments:[
      "四段對話裡的「你是我唯一」連標點符號都一樣，複製貼上也太省力了吧。",
      "心靈成長？我看是行事曆管理大師。",
@@ -635,7 +624,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"事前知不知情？", keywords:["知情","不知情","知道","管理疏失","疏失"]},
               {q:"喝到的消費者怎麼賠？", keywords:["賠償","退費","醫療費","補償","退款"]},
               {q:"門市要不要停業受檢？", keywords:["停業","暫停營業","受檢","檢驗","歇業"]}],
-   tactic_overrides:{TACTIC_MEDICAL:{flag:"guilt_trip"}},
    offline_comments:[
      "影片 1:13 水槽旁邊那包鮮奶，標籤貼了三層，比我的人生還有層次。",
      "我喝了三年的珍珠原來都洗過澡？退錢！",
@@ -648,7 +636,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"你到底有沒有在喝？", keywords:["有在喝","沒有在喝","沒在喝","承認","其實"]},
               {q:"業配費要不要退？", keywords:["業配費","代言費","退還","廠商","退回"]},
               {q:"以前的推薦是不是都是假的？", keywords:["推薦","真心","業配標示","以後","標示"]}],
-   tactic_overrides:{TACTIC_REFUND:{refund_words:["業配費","代言費","退還廠商","退回"]}},
    offline_comments:[
      "冰箱第二層第三瓶，連瓶蓋顏色都是競品的。你們家冰箱比你誠實。",
      "每天喝三瓶？那一瓶連封膜都還在。",
@@ -661,7 +648,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"是不是在罵粉絲？", keywords:["承認","是我說的","不該","盤子","罵"]},
               {q:"斗內要不要退？", keywords:["斗內","退款","退還","贊助","退錢"]},
               {q:"平常的哭窮是不是演的？", keywords:["哭窮","演的","真實狀況","收入","財務"]}],
-   tactic_overrides:{},
    profanity_extra_flame:10,
    offline_comments:[
      "第 32 分鐘你還順便點了外送，用的是我們剛斗內的錢。",
@@ -675,7 +661,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"分身帳號是不是你的？", keywords:["分身","我的帳號","承認","小明","是我"]},
               {q:"獎品要怎麼處理？", keywords:["重抽","補發","獎品","公開抽獎","重新抽"]},
               {q:"以前的抽獎是不是也內定？", keywords:["以前","內定","公開名單","第三方","過去"]}],
-   tactic_overrides:{TACTIC_OUTSOURCE:{flag:"contradiction"}},
    offline_comments:[
      "小明123 的追蹤名單只有三個：你、你媽、你家的貓。",
      "抽了三年都沒中，原來我在跟一隻貓競爭。",
@@ -688,7 +673,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"是不是抄襲？", keywords:["抄襲","翻譯","承認","未經授權","照搬"]},
               {q:"要不要向原作者道歉並下架？", keywords:["下架","道歉","原作者","授權"]},
               {q:"那 200 篇論文是真的有讀嗎？", keywords:["論文","有讀","沒有讀","誇大","沒讀"]}],
-   tactic_overrides:{TACTIC_MEDICAL:{flag:"guilt_trip", extra_flag:"contradiction"}},
    offline_comments:[
      "第 8 分鐘那個冷笑話在原片也冷，你連冷都翻得很精準。",
      "200 篇論文？我看是 1 個頻道翻 200 次。",
@@ -701,7 +685,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"到底是哪間哈佛？", keywords:["補習班","承認","不是哈佛大學","誤導","美語"]},
               {q:"要不要修改所有簡介與影片？", keywords:["修改","更正","簡介","下架"]},
               {q:"業配合約裡的學歷要不要跟廠商說明？", keywords:["廠商","合約","說明","賠償"]}],
-   tactic_overrides:{TACTIC_SUE:{extra_flag:"threat_lawsuit"}},
    offline_comments:[
      "證書右下角的貼紙寫「上課很認真」，這點我相信。",
      "哈佛美語畢業也很棒啊，但你寫的是哈佛畢業。",
@@ -714,7 +697,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"為什麼沒揭露是自己的店？", keywords:["揭露","自己的店","承認","隱瞞","我開的"]},
               {q:"灌好評的帳號要不要刪？", keywords:["灌好評","假評論","刪除","帳號","好評"]},
               {q:"其他推薦影片有沒有利益關係？", keywords:["其他","業配","公開","利益","合作"]}],
-   tactic_overrides:{TACTIC_OUTSOURCE:{shirking:30}},
    offline_comments:[
      "30 個好評帳號的大頭貼都是同一碗牛肉麵，只是換了濾鏡。",
      "最感動的一家？感動的是你的銀行帳戶吧。",
@@ -727,7 +709,6 @@ const CRISIS_EVENTS = [
    inquiries:[{q:"錢到底捐了沒？", keywords:["捐了","還沒捐","捐款","匯款","沒有捐","補捐"]},
               {q:"能不能公開真正的收據與帳目？", keywords:["收據","帳目","公開","明細"]},
               {q:"為什麼要做假收據？", keywords:["假收據","偽造","小畫家","承認","造假"]}],
-   tactic_overrides:{TACTIC_REFUND:{refund_words:["補捐","捐出","匯款","捐款"], need_digit:true}},
    offline_comments:[
      "收據上的「之加」，放大後還能看到小畫家的橡皮擦痕跡。",
      "連流浪狗的錢都要騙，你還是人嗎？",
@@ -743,10 +724,9 @@ const SITUATION_COMMENTS = [
   {when:c=>c.flags.includes("profanity"), lines:{black:"道歉文裡還能罵髒話，我真的佩服。"}},
   {when:c=>c.flags.includes("threat_lawsuit"), lines:{black:"要告就告啊，我等傳票等到天荒地老。",gossip:"律師函警告已經截圖，今晚一起來讀法條。"}},
   {when:c=>c.flags.includes("contradiction"), lines:{conan:"你第一段跟第三段說法不一樣，要不要先跟自己對好口供？"}},
-  {when:c=>c.flags.includes("empty_promise"), lines:{vendor:"勾了退款，內文一個字都沒寫。這叫量子退款嗎？"}},
+  {when:c=>c.flags.includes("empty_promise"), lines:{vendor:"勾了補救方案，內文一個字都沒寫。這叫量子道歉嗎？"}},
   {when:c=>c.flags.includes("guilt_trip"), lines:{meme:"「曬病歷」已加入公關套餐，下一步是不是曬疫苗卡？"}},
   {when:c=>c.flags.includes("lazy"), lines:{gossip:"就這樣？我泡麵都還沒泡開聲明就看完了。"}},
-  {when:c=>c.tactics.includes("TACTIC_OUTSOURCE"), lines:{conan:"外包廠商剛剛發聲明了：「我們只是照單生產」。你們要不要先對好口供？"}},
   {when:c=>c.helperUsed, lines:{meme:"這篇是不是公關模板第 3 號？我閉著眼睛都能背。"}},
   {when:c=>c.ghost, lines:{conan:"「首先、其次、最後、綜上所述」，AI 味重到我螢幕都起霧了。"}},
   {when:c=>c.dodged>=3, lines:{conan:"三個問題，你一題都沒回，是在寫詩嗎？"}},
@@ -785,6 +765,122 @@ const RED_FLAG_TEXT = {
   empty_promise:"勾了補救方案，內文卻一個字都沒寫，口說無憑。",
   lazy:"聲明稿短到像在敷衍。"
 };
+
+/* ==================== 事件專屬指令（每則事件 4 個影片形式＋4 個公關話術） ====================
+   fx：S 誠意、H 甩鍋、trust 廠商信任、flame 炎上度、flags 紅旗；
+       need：須在聲明稿內文寫出 words 其中之一（digit 為須含數字）才算數，做到誠意 +10、廠商信任 +10，沒寫則誠意 -10 並加紅旗 empty_promise。
+   vis（只有影片形式）：mode 為 normal／black／dim／glitch，expr 表情，fx 臉色，props 道具，sub 字幕前綴。
+   say（只有話術）：[人設, 留言]，勾選時取代該人設的離線留言。 */
+const NEED = words => ({need:{words}});
+const EVENT_TACTICS = {
+  EVENT_01:{
+    forms:[{label:"對著成堆 T 恤鞠躬", fx:{S:5}, vis:{expr:"bow",fx:"pale",props:["tshirts"]}},
+           {label:"現場剪吊牌證明原創", fx:{flags:["contradiction"]}, vis:{expr:"normal",props:["tshirt_hang","scissors"]}},
+           {label:"黑底白字只寫對不起", fx:{}, vis:{mode:"black",sub:"（黑底白字）"}},
+           {label:"穿著那件 T 恤出鏡", fx:{flame:10}, vis:{expr:"smile",props:["tshirt_on"]}}],
+    talks:[{label:"全額退款並公開代工廠", fx:NEED(["退款","退費","全額","代工"])},
+           {label:"推給設計師私下換廠", fx:{H:25}, say:["conan","設計師就是你本人，簡介第一行寫的。"]},
+           {label:"說是致敬極簡主義", fx:{H:10,flags:["contradiction"]}, say:["meme","「致敬 39 元」，年度最誠實的設計理念。"]},
+           {label:"對比對吊牌的網友提告", fx:{flags:["threat_lawsuit"]}, say:["black","告網友比對吊牌？吊牌自己會出庭作證。"]}]},
+  EVENT_02:{
+    forms:[{label:"抱著那個蛋糕鞠躬", fx:{S:5}, vis:{expr:"bow",fx:"pale",props:["cake"]}},
+           {label:"關燈只留一盞小燈", fx:{}, vis:{mode:"dim",expr:"cry"}},
+           {label:"四位前任一起入鏡", fx:{flame:10}, vis:{expr:"caught",props:["crowd4"]}},
+           {label:"放冥想音樂唸語錄", fx:{H:10}, vis:{expr:"normal",props:["incense"],sub:"（頌缽聲）"}}],
+    talks:[{label:"歸還所有粉絲禮物", fx:NEED(["歸還","禮物","退還","蛋糕"])},
+           {label:"說在做多元關係實驗", fx:{H:15,flags:["contradiction"]}, say:["conan","實驗報告呢？樣本數 4，對照組是粉絲嗎？"]},
+           {label:"曬出身心科診斷書", fx:{H:10,flags:["guilt_trip"]}, say:["meme","診斷結果：心靈成長過度，需要四個人陪。"]},
+           {label:"揚言公開前任對話", fx:{flags:["threat_lawsuit"]}, say:["gossip","要公開？太好了，今晚的節目內容有了。"]}]},
+  EVENT_03:{
+    forms:[{label:"拉下鐵門在店前鞠躬", fx:{S:5}, vis:{expr:"bow",props:["shutter"]}},
+           {label:"現場喝一杯水槽珍珠", fx:{flame:10}, vis:{expr:"smile",props:["boba"]}},
+           {label:"戴頭套全程不露臉", fx:{H:10}, vis:{expr:"normal",props:["mask"]}},
+           {label:"請衛生局人員入鏡", fx:{flame:-5}, vis:{expr:"cry",props:["inspector"]}}],
+    talks:[{label:"停業受檢並公開報告", fx:NEED(["停業","受檢","檢驗","報告"])},
+           {label:"推給加盟主管理不當", fx:{H:25}, say:["vendor","加盟主表示：店長是你親自任命的表妹。"]},
+           {label:"說珍珠高溫已消毒", fx:{H:10,flags:["contradiction"]}, say:["conan","水槽旁邊是拖把桶，請問消毒到哪一步？"]},
+           {label:"對離職員工提告洩密", fx:{flags:["threat_lawsuit"]}, say:["black","告吹哨者？衛生局都替他按讚了。"]}]},
+  EVENT_04:{
+    forms:[{label:"打開冰箱全部清空", fx:{S:5}, vis:{expr:"caught",props:["fridge"]}},
+           {label:"對鏡頭一口喝完一瓶", fx:{flame:5}, vis:{expr:"smile",props:["bottle"]}},
+           {label:"黑底白字配氣泡音", fx:{}, vis:{mode:"black",sub:"（啵——嘶）"}},
+           {label:"跟廠商老闆並肩坐", fx:{trust:10,H:5}, vis:{expr:"normal",props:["boss"]}}],
+    talks:[{label:"退還全部代言費", fx:NEED(["代言費","業配費","退還","退回"])},
+           {label:"說冰箱是室友的", fx:{H:25}, say:["conan","你簡介寫獨居三年，室友是冰箱本人嗎？"]},
+           {label:"說競品是買來盲測", fx:{H:10,flags:["contradiction"]}, say:["meme","盲測二十瓶，代言那瓶沒開，盲得很徹底。"]},
+           {label:"告爆料者侵犯隱私", fx:{flags:["threat_lawsuit"]}, say:["gossip","放大 400% 犯法？那我的雙指要去自首了。"]}]},
+  EVENT_05:{
+    forms:[{label:"關掉 RGB 燈跪坐道歉", fx:{S:5}, vis:{mode:"dim",expr:"bow"}},
+           {label:"重播那 47 分鐘片段", fx:{flame:10}, vis:{expr:"caught",props:["replay"]}},
+           {label:"戴耳機邊打遊戲邊講", fx:{H:10,flame:5}, vis:{expr:"normal",props:["gamepad"]}},
+           {label:"背後貼滿粉絲感謝卡", fx:{H:5}, vis:{expr:"cry",props:["cards"]}}],
+    talks:[{label:"退還本月所有斗內", fx:NEED(["斗內","退還","退款","退錢"])},
+           {label:"說下播是演的劇本", fx:{H:15,flags:["contradiction"]}, say:["conan","劇本有寫你第 23 分鐘挖鼻孔嗎？"]},
+           {label:"推給剪輯師惡意剪接", fx:{H:25}, say:["vendor","剪輯師：那天我請假，那是直播原檔。"]},
+           {label:"嗆不爽可以不要看", fx:{H:20,flame:10}, say:["black","好，不看了，順便把斗內退一下。"]}]},
+  EVENT_06:{
+    forms:[{label:"抱著貓一起鞠躬", fx:{S:5}, vis:{expr:"bow",props:["cat"]}},
+           {label:"直播現場重新抽獎", fx:{flame:-5}, vis:{expr:"normal",props:["lottery"]}},
+           {label:"戴墨鏡說貓不是我的", fx:{flags:["contradiction"]}, vis:{expr:"shades",props:["cat"]}},
+           {label:"全程用變聲器講話", fx:{H:10}, vis:{mode:"glitch",expr:"normal",props:["vc"],sub:"（機器人聲）"}}],
+    talks:[{label:"公開重抽並補發獎品", fx:NEED(["重抽","補發","重新抽","公開抽獎"])},
+           {label:"推給小編登錯帳號", fx:{H:25}, say:["conan","小編登錯帳號，還順手用你家貓當頭貼？"]},
+           {label:"說小明123是貓的帳號", fx:{H:10,flags:["contradiction"]}, say:["meme","貓：喵（翻譯：我只是被利用的工具貓）。"]},
+           {label:"對截圖網友保留追訴", fx:{flags:["threat_lawsuit"]}, say:["black","告吧，順便請貓出庭作證。"]}]},
+  EVENT_07:{
+    forms:[{label:"舉著手寫道歉看板", fx:{S:5}, vis:{expr:"cry",props:["sign"]}},
+           {label:"請原作者視訊連線", fx:{flame:-5}, vis:{expr:"caught",props:["video_call"]}},
+           {label:"把 200 篇論文堆上桌", fx:{flags:["contradiction"]}, vis:{expr:"normal",props:["papers"]}},
+           {label:"全程用外國口音說話", fx:{flame:10}, vis:{expr:"smile",sub:"（外國腔）"}}],
+    talks:[{label:"下架並向原作者致歉", fx:NEED(["下架","原作者","授權","致歉"])},
+           {label:"推給翻譯外包", fx:{H:25}, say:["conan","外包連原作者的冷笑話都翻了，真敬業。"]},
+           {label:"說是在致敬原頻道", fx:{H:10,flags:["contradiction"]}, say:["meme","致敬到連「記得訂閱我」都一起致敬。"]},
+           {label:"告爆料者妨害名譽", fx:{flags:["threat_lawsuit"]}, say:["gossip","妨害名譽要先有名譽，今晚開台幫你算。"]}]},
+  EVENT_08:{
+    forms:[{label:"拿結業證書鞠躬", fx:{S:5}, vis:{expr:"bow",props:["cert"]}},
+           {label:"背景換成名校照片", fx:{flame:10}, vis:{expr:"smile",props:["poster_h"]}},
+           {label:"穿學士服戴方帽", fx:{flags:["contradiction"]}, vis:{expr:"smile",props:["gradcap"]}},
+           {label:"律師在旁正襟危坐", fx:{H:5,trust:5}, vis:{expr:"normal",props:["lawyer"]}}],
+    talks:[{label:"修改簡介並向廠商說明", fx:NEED(["修改","更正","簡介","廠商"])},
+           {label:"說哈佛美語也是哈佛", fx:{H:15,flags:["contradiction"]}, say:["meme","照這邏輯，我吃過麥當勞也算漢堡大學校友。"]},
+           {label:"推給經紀公司寫錯", fx:{H:25}, say:["vendor","經紀公司：簡介是你凌晨三點自己改的。"]},
+           {label:"揚言告爆料的同學", fx:{flags:["threat_lawsuit"]}, say:["black","告同學？他手上還有你的「上課很認真」貼紙。"]}]},
+  EVENT_09:{
+    forms:[{label:"在自家店門口鞠躬", fx:{S:5}, vis:{expr:"bow",props:["shopfront"]}},
+           {label:"邊吃招牌菜邊道歉", fx:{flame:10}, vis:{expr:"smile",props:["bowl"]}},
+           {label:"戴假鬍子扮工讀生", fx:{flags:["contradiction"]}, vis:{expr:"normal",props:["mustache"]}},
+           {label:"把 30 支手機排上桌", fx:{flame:-5}, vis:{expr:"caught",props:["phones"]}}],
+    talks:[{label:"刪假評論並揭露關係", fx:NEED(["刪除","假評論","揭露","公開"])},
+           {label:"推給工讀生自作主張", fx:{H:25}, say:["conan","工讀生自作主張，還寫「老闆饅頭很帥」？"]},
+           {label:"說五星是自我肯定", fx:{H:10,flags:["contradiction"]}, say:["meme","自己給自己五星，自我肯定界的天花板。"]},
+           {label:"揚言告給負評的人", fx:{flags:["threat_lawsuit"]}, say:["black","灌好評的人要告給負評的人，劇情好精彩。"]}]},
+  EVENT_10:{
+    forms:[{label:"抱著狗狗照片鞠躬", fx:{S:5}, vis:{expr:"bow",props:["dog"]}},
+           {label:"直播現場網銀轉帳", fx:{flame:-5}, vis:{expr:"normal",props:["phone_bank"]}},
+           {label:"背景掛那張假收據", fx:{flame:10}, vis:{expr:"caught",props:["receipt"]}},
+           {label:"哭說自己也是流浪動物", fx:{flags:["guilt_trip"]}, vis:{expr:"cry",fx:"pale"}}],
+    talks:[{label:"補捐並公開匯款明細", fx:{need:{words:["補捐","匯款","明細","捐出"],digit:true}}},
+           {label:"推給幫忙記帳的媽媽", fx:{H:25}, say:["vendor","你媽說她只會用計算機，小畫家是你開的。"]},
+           {label:"說收據只是示意圖", fx:{H:10,flags:["contradiction"]}, say:["meme","「流浪動物之加」，示意圖連錯字都很示意。"]},
+           {label:"告質疑收據的網友", fx:{flags:["threat_lawsuit"]}, say:["black","告吧，起訴書記得別用小畫家做。"]}]}
+};
+CRISIS_EVENTS.forEach(ev=>{
+  const t = EVENT_TACTICS[ev.id], n = ev.id.replace("EVENT_","E");
+  ev.forms = t.forms.map((x,i)=>({...x, id:`${n}_F${i+1}`, group:"form"}));
+  ev.talks = t.talks.map((x,i)=>({...x, id:`${n}_T${i+1}`, group:"talk"}));
+});
+const FLAG_NAME = {threat_lawsuit:"威脅提告", guilt_trip:"情緒勒索", contradiction:"前後矛盾", profanity:"罵髒話"};
+/* 指令下方的效果提示由 fx 自動產生，避免文字與實際計分不一致 */
+function tacticHint(t){
+  const f=t.fx||{}, out=[], sg=n=>(n>0?"+":"")+n;
+  if(f.need) out.push(f.need.digit ? "內文寫出金額才算：誠意 +10" : "內文寫出來才算：誠意 +10");
+  if(f.S) out.push("誠意 "+sg(f.S));
+  if(f.H) out.push("甩鍋 "+sg(f.H));
+  if(f.trust) out.push("廠商信任 "+sg(f.trust));
+  if(f.flame) out.push("炎上 "+sg(f.flame));
+  (f.flags||[]).forEach(x=>out.push("紅旗："+FLAG_NAME[x]));
+  return out.join("、") || "只改畫面";
+}
 
 /* ==================== 小工具 ==================== */
 const $ = id => document.getElementById(id);
@@ -986,15 +1082,20 @@ function startRound(charKey){
 }
 
 /* ==================== 寫稿：策略、影片、字幕 ==================== */
+const tacticsOf = ev => [...ev.forms, ...ev.talks];
+const findTactic = (ev, id) => tacticsOf(ev).find(t=>t.id===id);
+const curForm = () => G.event.forms.find(t=>G.tactics.has(t.id));
+function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function buildCmds(){
+  const ev=G.event;
   for(const g of ["form","talk"]){
     const box=$(g==="form"?"cmdsA":"cmdsB"); box.innerHTML="";
-    TACTICS.filter(t=>t.group===g).forEach(t=>{
+    shuffle(g==="form"?ev.forms:ev.talks).forEach(t=>{
       const b=document.createElement("button"); b.className="cmd"; b.type="button"; b.id="t-"+t.id;
-      b.setAttribute("aria-pressed", G.tactics.has(t.id)); b.innerHTML = `${t.label}<span class="tag">${t.hint}</span>`;
+      b.setAttribute("aria-pressed", G.tactics.has(t.id)); b.innerHTML = `${esc(t.label)}<span class="tag">${tacticHint(t)}</span>`;
       b.onclick=()=>{
         if(G.tactics.has(t.id)) G.tactics.delete(t.id);
-        else { if(t.group==="form") TACTICS.filter(x=>x.group==="form").forEach(x=>G.tactics.delete(x.id)); G.tactics.add(t.id); }
+        else { if(t.group==="form") ev.forms.forEach(x=>G.tactics.delete(x.id)); G.tactics.add(t.id); }
         document.querySelectorAll(".cmd").forEach(el=>el.setAttribute("aria-pressed", G.tactics.has(el.id.slice(2))));
         Sound.click(); renderVideo(); renderSub();
       };
@@ -1002,38 +1103,143 @@ function buildCmds(){
     });
   }
 }
+
+/* --- 影片畫面：128×72。主角站在 x 50～78、y 31～58，桌面從 y 58 開始 --- */
 const vctx = () => $("video").getContext("2d");
-function renderVideo(expr){
-  const c=vctx(), W=128, H=72, black=G.tactics.has("TACTIC_BLACK");
-  $("screen").classList.toggle("blackmode", black);
-  c.clearRect(0,0,W,H);
-  if(black){ c.fillStyle="#000"; c.fillRect(0,0,W,H); return; }
-  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
-    const band = y<26?0:y<46?1:2, d=((x+y)%2===0)&&((y%26)<2);
-    c.fillStyle = ["#3a2f5c","#33294f","#2b2244"][band]; if(d) c.fillStyle="#463a70"; c.fillRect(x,y,1,1);
+const R = (c,col,x,y,w,h) => { c.fillStyle=col; c.fillRect(x,y,w,h); };
+function ringLight(c, a, b){
+  for(let d=0; d<360; d++){ const r=d*Math.PI/180;
+    for(const rr of [19,20,21]){ c.fillStyle = rr===20 ? a : b; c.fillRect(Math.round(64+Math.cos(r)*rr), Math.round(30+Math.sin(r)*rr), 1, 1); } }
+}
+/* 每位角色各自的直播間背景 */
+const ROOMS = {
+  CHAR_IVY(c){ // 美妝：粉色條紋牆、化妝鏡燈泡框、保養品層架、愛心霓虹燈
+    for(let x=0;x<128;x++) R(c, x%8<4?"#f0bfd2":"#e8afc5", x,0,1,58);
+    R(c,"#c98aa6",0,46,128,1);
+    R(c,"#d9b25a",4,8,28,30); R(c,"#bfe6ff",7,11,22,24); R(c,"#e6f6ff",10,13,3,8); R(c,"#e6f6ff",14,13,2,5);
+    for(let i=0;i<5;i++){ R(c,"#fff6d0",5+i*6,8,2,2); R(c,"#fff6d0",5+i*6,36,2,2); }
+    for(let i=0;i<4;i++){ R(c,"#fff6d0",4,13+i*6,2,2); R(c,"#fff6d0",30,13+i*6,2,2); }
+    R(c,"#a8728a",88,26,36,2);
+    [["#ff6fae",90,18,4,8],["#c86bff",96,20,3,6],["#f5b82e",101,16,4,10],["#ffffff",107,19,3,7],["#ff8a8a",112,17,5,9],["#8f9bd0",119,21,3,5]].forEach(([col,x,y,w,h])=>{ R(c,col,x,y,w,h); R(c,K,x,y,w,1); });
+    [[0,1,1,0,0,1,1,0],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,0],[0,0,1,1,1,1,0,0],[0,0,0,1,1,0,0,0]].forEach((row,y)=>row.forEach((v,x)=>{ if(v) R(c,"#ff3f8e",102+x,5+y,1,1); }));
+    R(c,"#ffffff",0,58,128,2); R(c,"#e3d5ea",0,60,128,12); R(c,"#cdbcd8",0,66,128,1);
+    ringLight(c,"#fffdf0","#ffe9a8");
+  },
+  CHAR_KAI(c){ // 遊戲實況：深色房間、RGB 燈條、雙螢幕、電競椅
+    R(c,"#141a33",0,0,128,58);
+    const rgb=["#ff4d5e","#ff8a1f","#f5b82e","#4fdc7a","#45d0ff","#7a4fdc","#c86bff"];
+    for(let x=0;x<128;x++) R(c, rgb[Math.floor(x/9)%rgb.length], x,2,1,2);
+    R(c,"#2a1f4a",6,10,20,26); R(c,"#c86bff",8,12,16,22); R(c,"#141a33",12,16,8,8); R(c,"#45d0ff",13,18,2,2); R(c,"#45d0ff",17,18,2,2); R(c,"#141a33",11,26,10,3);
+    R(c,"#3a3a55",4,40,26,2); R(c,"#4fdc7a",8,34,4,6); R(c,"#ff4d5e",16,35,5,5); R(c,"#f5b82e",24,36,3,4);
+    R(c,"#d33a4a",52,20,24,38); R(c,"#5a2030",55,22,18,36); R(c,"#d33a4a",56,24,16,3);
+    R(c,K,86,30,20,15); R(c,"#45d0ff",87,31,18,12); R(c,"#4fdc7a",89,38,4,3); R(c,"#ff4d5e",98,34,3,3); R(c,"#1f3a7a",87,41,18,2);
+    R(c,K,106,32,19,13); R(c,"#7a4fdc",107,33,17,10); R(c,"#f5b82e",110,36,3,1); R(c,"#ffffff",110,38,10,1); R(c,"#ffffff",110,40,7,1);
+    R(c,"#3a3a55",95,45,3,13); R(c,"#3a3a55",114,45,3,13);
+    R(c,"#2b2b40",0,58,128,14); R(c,"#3a3a55",0,58,128,2);
+    for(let x=84;x<124;x++) R(c, rgb[Math.floor(x/3)%rgb.length], x,62,1,1);
+    R(c,"#111",84,61,40,1);
+    ringLight(c,"#bfe6ff","#45d0ff");
+  },
+  CHAR_LEO(c){ // 知識型：深綠書房、書架、寫滿算式的白板、地球儀
+    R(c,"#26403a",0,0,128,58);
+    R(c,"#6b4a2e",2,4,30,54); R(c,"#3e2a1a",4,6,26,50);
+    const books=["#d33a4a","#45d0ff","#f5b82e","#4fdc7a","#c86bff","#ff8a1f","#e8ecf4","#8f9bd0"];
+    for(let s=0;s<4;s++){ R(c,"#6b4a2e",4,18+s*12,26,2); let x=5;
+      for(let i=0;x<28;i++){ const w=2+((i*7+s*3)%3), h=8+((i*5+s)%3); R(c,books[(i+s*3)%books.length],x,18+s*12-h,w,h); x+=w+((i+s)%4===0?2:0); } }
+    R(c,"#c9c9d4",86,6,38,28); R(c,"#ffffff",88,8,34,24);
+    [[91,11,6],[99,11,2],[103,11,8],[91,15,4],[97,15,10],[91,19,12],[105,19,4],[91,23,7],[100,23,9],[91,27,5]].forEach(([x,y,w])=>R(c,"#2c3557",x,y,w,1));
+    R(c,"#d33a4a",112,26,8,1); R(c,"#d33a4a",112,28,8,1);
+    R(c,"#7a5232",0,58,128,14); R(c,"#9a6a42",0,58,128,2);
+    R(c,"#6b4a2e",112,55,6,3); R(c,"#45d0ff",109,45,12,10); R(c,"#4fdc7a",111,47,4,3); R(c,"#4fdc7a",116,50,3,3); R(c,"#c9c9d4",114,43,1,12);
+    R(c,"#f5b82e",20,46,8,4); R(c,"#3a3a44",23,50,2,8);
+    ringLight(c,"#ffffff","#cfe3ff");
+  },
+  CHAR_MANTOU(c){ // 美食：白磁磚廚房、吊鍋、黑板菜單、冒煙湯鍋
+    R(c,"#eef0e6",0,0,128,58);
+    for(let x=0;x<128;x+=7) R(c,"#cfd3c4",x,0,1,58);
+    for(let y=0;y<58;y+=7) R(c,"#cfd3c4",0,y,128,1);
+    R(c,"#8a8a96",4,6,38,1);
+    [[8,"#55555f",6],[20,"#3a3a44",8],[33,"#55555f",5]].forEach(([x,col,r])=>{ R(c,"#8a8a96",x+r-1,7,1,4); R(c,col,x,11,r*2,r*2-2); R(c,"#8a8a96",x+1,12,r*2-2,1); });
+    R(c,"#6b4a2e",86,6,38,26); R(c,"#2f4a3a",88,8,34,22);
+    [[91,11,14],[91,16,10],[91,21,12],[91,26,9]].forEach(([x,y,w])=>{ R(c,"#e8ecf4",x,y,w,1); R(c,"#ff8a1f",x+w+4,y,6,1); });
+    R(c,"#d33a4a",8,30,8,10); R(c,"#f5b82e",8,30,8,1); R(c,"#f5b82e",8,39,8,1); R(c,"#f5b82e",11,40,2,3);
+    R(c,"#b8bcc8",0,58,128,14); R(c,"#dfe2ea",0,58,128,2); R(c,"#9a9eaa",0,64,128,1);
+    R(c,"#55555f",98,46,22,12); R(c,"#8f9bd0",99,47,20,10); R(c,"#3a3a44",96,47,2,3); R(c,"#3a3a44",120,47,2,3);
+    [[104,40],[107,36],[110,41],[113,37],[106,32],[112,31]].forEach(([x,y])=>R(c,"#ffffff",x,y,2,2));
+    ringLight(c,"#fff6d0","#ffe08a");
   }
-  c.fillStyle="#5a4632"; c.fillRect(6,20,30,2);
-  c.fillStyle="#2f8a4a"; c.fillRect(9,14,5,6); c.fillStyle="#4fdc7a"; c.fillRect(10,11,3,4);
-  c.fillStyle="#c8a46a"; c.fillRect(20,12,12,8); c.fillStyle="#ff6fae"; c.fillRect(21,13,10,6);
-  c.fillStyle="#1b1530"; c.fillRect(100,10,20,14); c.fillStyle="#ff4d5e"; c.fillRect(101,11,18,12);
-  c.fillStyle="#fff"; c.fillRect(108,14,2,5); c.fillRect(110,15,2,3);
-  c.fillStyle="#1b1530"; c.fillRect(0,57,W,1); c.fillStyle="#6b4a2e"; c.fillRect(0,58,W,14); c.fillStyle="#86603c"; c.fillRect(0,58,W,2);
-  const cx=64, cy=30;
-  for(let a=0;a<360;a+=1){ const r=a*Math.PI/180;
-    for(const rr of [19,20,21]){ c.fillStyle= rr===20?"#fff6d0":"#ffe08a"; c.fillRect(Math.round(cx+Math.cos(r)*rr),Math.round(cy+Math.sin(r)*rr),1,1);} }
-  const bow = G.tactics.has("TACTIC_BOW");
-  drawChar(c, G.char, 50, 31, expr || (bow ? "bow" : "cry"), bow ? "pale" : "");
-  if(G.tactics.has("TACTIC_LAWYER")) draw(c, LAW, LAW_PAL, 82, 36);
-  c.fillStyle="#1b1530"; c.fillRect(34,50,5,7); c.fillStyle="#666"; c.fillRect(35,51,3,5);
-  if(G.tactics.has("TACTIC_MEDICAL")){ c.fillStyle="#1b1530"; c.fillRect(77,46,13,12); c.fillStyle="#f4f4f4"; c.fillRect(78,47,11,10);
-    c.fillStyle="#d33a4a"; c.fillRect(79,48,4,1); c.fillStyle="#8f9bd0"; for(let i=0;i<3;i++) c.fillRect(79,50+i*2,8,1); }
+};
+/* 影片形式道具：back 畫在主角後面，其餘畫在主角前面 */
+const BOSS_PAL = {...LAW_PAL, h:"#55555f", d:"#3a3a48", D:"#55555f", r:"#f5b82e"};
+const INSP_PAL = {...LAW_PAL, h:"#1f3a7a", d:"#e8ecf4", D:"#c9c9d4", w:"#45d0ff", r:"#1f3a7a"};
+const PROPS = {
+  tshirts:{draw(c){ [["#ffffff",4,48],["#ff6fae",8,44],["#45d0ff",4,40],["#f5b82e",10,36],["#ffffff",92,48],["#4fdc7a",96,44],["#c86bff",90,40]].forEach(([col,x,y])=>{ R(c,K,x,y,22,1); R(c,col,x,y+1,22,4); R(c,"#ff4d5e",x+18,y+1,2,2); }); }},
+  tshirt_hang:{back:true, draw(c){ R(c,"#8a8a96",88,10,30,1); R(c,"#ffffff",92,12,22,4); R(c,"#ffffff",96,16,14,18); R(c,"#c9c9d4",96,33,14,1); R(c,"#ff4d5e",110,18,4,6); R(c,K,111,20,2,1); }},
+  scissors:{draw(c){ R(c,"#c9c9d4",76,44,8,1); R(c,"#c9c9d4",76,47,8,1); R(c,"#c9c9d4",83,45,2,2); R(c,"#ff4d5e",73,43,3,3); R(c,"#ff4d5e",73,47,3,3); }},
+  tshirt_on:{draw(c){ R(c,"#ffffff",53,52,22,6); R(c,"#ffffff",51,54,2,4); R(c,"#ffffff",75,54,2,4); R(c,"#ff4d5e",70,53,4,4); R(c,K,72,52,1,1); R(c,"#1b1530",57,54,5,1); }},
+  cake:{draw(c){ R(c,K,55,49,18,9); R(c,"#ffffff",56,50,16,7); R(c,"#ff6fae",56,53,16,2); [59,64,69].forEach(x=>{ R(c,"#d33a4a",x,45,1,5); R(c,"#f5b82e",x,43,1,2); }); }},
+  crowd4:{draw(c){ [[6,"#d33a4a"],[22,"#45d0ff"],[94,"#4fdc7a"],[110,"#c86bff"]].forEach(([x,col],i)=>{ draw(c, HEAD, {k:K,s:"#f2c6a0",h:["#3a2a1a","#f5b82e","#222228","#a0522d"][i],c:col}, x, 42); R(c,col,x,54,12,4); R(c,"#ff4d5e",x+5,47,2,1); }); }},
+  incense:{draw(c){ R(c,"#6b4a2e",18,52,8,6); R(c,"#c8a46a",19,53,6,1); R(c,"#8a3a3a",21,44,1,8); R(c,"#ff4d5e",21,43,1,1); [[20,40],[22,36],[20,32],[23,28]].forEach(([x,y])=>R(c,"#c9c9d4",x,y,2,2)); }},
+  shutter:{back:true, draw(c){ R(c,"#9a9eaa",0,0,128,58); for(let y=0;y<58;y+=3) R(c,"#7a7e8a",0,y,128,1); R(c,"#55555f",0,0,128,4); R(c,"#ff4d5e",90,20,30,10); R(c,"#ffffff",93,23,24,1); R(c,"#ffffff",93,26,18,1); }},
+  boba:{draw(c){ R(c,K,74,42,8,15); R(c,"#e8ecf4",75,43,6,13); R(c,"#c8a46a",75,46,6,10); [[75,53],[78,54],[76,51],[79,50]].forEach(([x,y])=>R(c,K,x,y,2,2)); R(c,"#ff6fae",79,36,1,8); }},
+  mask:{draw(c){ R(c,"#3a3f5a",55,33,18,18); R(c,"#262a40",55,33,18,2); R(c,"#f2c6a0",58,40,12,3); R(c,K,61,41,2,1); R(c,K,66,41,2,1); }},
+  inspector:{draw(c){ draw(c, LAW, INSP_PAL, 84, 36); R(c,"#1f3a7a",86,34,16,3); R(c,"#ffffff",104,46,6,8); R(c,"#45d0ff",105,47,4,1); R(c,"#45d0ff",105,49,4,1); }},
+  bottle:{draw(c){ R(c,K,74,38,7,19); R(c,"#4fdc7a",75,42,5,14); R(c,"#bfe6ff",76,39,3,3); R(c,"#ffffff",75,47,5,4); R(c,"#45d0ff",76,48,3,2); }},
+  fridge:{back:true, draw(c){ R(c,K,86,8,36,50); R(c,"#e8ecf4",87,9,34,48); R(c,"#bfe6ff",89,11,30,44);
+    for(let s=0;s<4;s++){ R(c,"#c9c9d4",89,21+s*11,30,1); for(let i=0;i<7;i++) R(c, s===2&&i===3?"#4fdc7a":(i%2?"#45d0ff":"#ff4d5e"), 90+i*4, 14+s*11, 3, 7); } }},
+  boss:{draw(c){ draw(c, LAW, BOSS_PAL, 84, 36); R(c,"#4fdc7a",104,48,3,9); R(c,"#ffffff",104,51,3,2); }},
+  replay:{back:true, draw(c){ R(c,K,84,8,40,28); R(c,"#2b2244",85,9,38,26); R(c,"#ff4d5e",88,12,3,3); R(c,"#ffffff",92,13,8,1);
+    draw(c, HEAD, {k:K,s:"#f2c6a0",h:"#1f2e55",c:"#3a3f5a"}, 98, 18); R(c,"#ffffff",88,31,32,1); R(c,"#ff4d5e",88,31,12,1); }},
+  gamepad:{draw(c){ R(c,K,56,50,18,7); R(c,"#3a3f5a",57,51,16,5); R(c,"#ff4d5e",69,52,2,1); R(c,"#45d0ff",67,53,2,1); R(c,"#c9c9d4",59,52,3,1); R(c,"#c9c9d4",60,51,1,3); }},
+  cards:{back:true, draw(c){ [["#ff6fae",6,8],["#f5b82e",18,14],["#45d0ff",8,24],["#4fdc7a",22,30],["#ffffff",90,8],["#c86bff",104,12],["#ff8a1f",94,24],["#ffffff",110,28],["#ff6fae",36,6],["#45d0ff",82,40]].forEach(([col,x,y])=>{ R(c,K,x,y,10,8); R(c,col,x+1,y+1,8,6); R(c,"#d33a4a",x+4,y+3,2,2); }); }},
+  cat:{draw(c){ const o="#ff8a1f"; R(c,o,12,49,14,9); R(c,o,14,44,9,6); R(c,o,14,42,2,2); R(c,o,21,42,2,2); R(c,K,16,46,1,1); R(c,K,20,46,1,1); R(c,"#ff6fae",18,48,1,1); R(c,"#c86a10",12,52,14,1); R(c,o,26,50,3,2); }},
+  lottery:{draw(c){ R(c,K,88,40,26,18); R(c,"#d33a4a",89,41,24,16); R(c,"#f5b82e",95,41,12,2); R(c,"#ffffff",97,47,8,6); R(c,K,100,48,2,1); R(c,K,101,49,1,2); R(c,K,100,52,1,1);
+    [[84,34,"#f5b82e"],[118,36,"#45d0ff"],[116,30,"#4fdc7a"]].forEach(([x,y,col])=>R(c,col,x,y,3,3)); }},
+  vc:{draw(c){ R(c,K,88,48,14,10); R(c,"#3a3a55",89,49,12,8); R(c,"#4fdc7a",91,51,3,3); R(c,"#ff4d5e",96,51,3,3); R(c,"#45d0ff",90,55,10,1); }},
+  sign:{draw(c){ R(c,"#6b4a2e",104,48,2,10); R(c,K,84,30,40,20); R(c,"#ffffff",85,31,38,18); [[88,35,30],[88,39,24],[88,43,28]].forEach(([x,y,w])=>R(c,"#d33a4a",x,y,w,2)); }},
+  video_call:{draw(c){ R(c,K,86,28,36,24); R(c,"#26403a",87,29,34,20); draw(c, HEAD, {k:K,s:"#f2c6a0",h:"#f5b82e",c:"#45d0ff"}, 98, 33); R(c,"#ff4d5e",116,31,3,3); R(c,"#55555f",100,52,10,2); R(c,"#55555f",96,54,18,4); }},
+  papers:{draw(c){ for(let i=0;i<6;i++){ R(c,"#ffffff",4+(i%2),56-i*3,26,3); R(c,"#c9c9d4",6,57-i*3,20,1); } for(let i=0;i<5;i++){ R(c,"#ffffff",92-(i%2),56-i*3,28,3); R(c,"#c9c9d4",94,57-i*3,22,1); } R(c,"#f5b82e",10,38,14,2); }},
+  cert:{draw(c){ R(c,K,78,38,22,16); R(c,"#fff6d0",79,39,20,14); R(c,"#c8a46a",81,41,16,1); R(c,"#8f9bd0",81,44,14,1); R(c,"#8f9bd0",81,46,10,1); R(c,"#f5b82e",91,47,5,5); R(c,"#ff4d5e",92,48,3,3); }},
+  poster_h:{back:true, draw(c){ R(c,K,84,4,40,34); R(c,"#a51c30",85,5,38,32); R(c,"#ffffff",96,10,16,14); R(c,"#ffffff",98,24,12,3); R(c,"#ffffff",101,27,6,2); R(c,"#a51c30",99,13,10,1); R(c,"#a51c30",99,16,10,1); R(c,"#a51c30",99,19,10,1); }},
+  gradcap:{draw(c){ R(c,K,52,27,24,3); R(c,"#222228",56,30,16,3); R(c,"#f5b82e",74,28,1,6); R(c,"#f5b82e",73,34,3,2); R(c,"#222228",51,52,26,6); R(c,"#a51c30",61,52,6,6); }},
+  lawyer:{draw(c){ draw(c, LAW, LAW_PAL, 82, 36); }},
+  shopfront:{back:true, draw(c){ R(c,"#eef0e6",0,0,128,58); for(let x=0;x<128;x+=8){ R(c,"#d33a4a",x,4,4,10); R(c,"#ffffff",x+4,4,4,10); } R(c,K,0,14,128,1);
+    R(c,"#6b4a2e",4,20,36,38); R(c,"#bfe6ff",8,24,28,20); R(c,"#6b4a2e",88,20,34,38); R(c,"#3e2a1a",92,24,26,34); R(c,"#f5b82e",114,40,2,2); }},
+  bowl:{draw(c){ R(c,K,55,50,20,8); R(c,"#ffffff",56,50,18,6); R(c,"#d33a4a",56,53,18,1); R(c,"#f5b82e",58,48,14,3); R(c,"#ff8a1f",62,47,4,2); [[60,42],[66,40],[70,43]].forEach(([x,y])=>R(c,"#ffffff",x,y,2,2)); R(c,"#c8a46a",72,40,1,10); R(c,"#c8a46a",74,40,1,10); }},
+  mustache:{draw(c){ R(c,"#3a2a1a",58,45,12,2); R(c,"#3a2a1a",57,46,2,2); R(c,"#3a2a1a",69,46,2,2); R(c,"#ffffff",53,52,22,6); R(c,"#ff8a1f",58,53,12,2); }},
+  phones:{draw(c){ for(let r=0;r<2;r++) for(let i=0;i<6;i++){ R(c,K,2+i*7,48+r*5,5,4); R(c,"#45d0ff",3+i*7,49+r*5,3,2); R(c,K,84+i*7,48+r*5,5,4); R(c,"#f5b82e",85+i*7,49+r*5,3,2); } }},
+  dog:{draw(c){ R(c,K,84,32,24,22); R(c,"#fff6d0",85,33,22,20); const b="#a0522d"; R(c,b,89,37,14,13); R(c,"#6b3a1a",87,37,3,8); R(c,"#6b3a1a",102,37,3,8); R(c,K,92,41,2,2); R(c,K,98,41,2,2); R(c,K,95,45,3,2); R(c,"#ff6fae",96,48,2,2); }},
+  phone_bank:{draw(c){ R(c,K,76,38,10,17); R(c,"#26403a",77,40,8,12); R(c,"#4fdc7a",78,43,6,6); R(c,"#ffffff",79,46,1,1); R(c,"#ffffff",80,47,1,1); R(c,"#ffffff",81,46,1,1); R(c,"#ffffff",82,45,1,1); }},
+  receipt:{back:true, draw(c){ R(c,K,90,4,30,44); R(c,"#ffffff",91,5,28,42); [[94,9,20],[94,14,14],[94,18,18],[94,22,12],[94,26,20],[94,30,10]].forEach(([x,y,w])=>R(c,"#55555f",x,y,w,1));
+    R(c,"#d33a4a",104,34,10,9); R(c,"#ffffff",106,36,6,5); R(c,"#d33a4a",107,37,4,3); for(let x=0;x<28;x+=4) R(c,"#cfd3c4",91+x,46,2,1); }}
+};
+function renderVideo(expr){
+  const c=vctx(), W=128, H=72, f=curForm(), v=(f&&f.vis)||{}, mode=v.mode||"normal";
+  $("screen").classList.toggle("blackmode", mode==="black");
+  c.clearRect(0,0,W,H);
+  if(mode==="black"){ c.fillStyle="#000"; c.fillRect(0,0,W,H); return; }
+  (ROOMS[G.char]||ROOMS.CHAR_IVY)(c);
+  const props=(v.props||[]).map(p=>PROPS[p]).filter(Boolean);
+  props.filter(p=>p.back).forEach(p=>p.draw(c));
+  drawChar(c, G.char, 50, 31, expr || v.expr || "cry", v.fx || (v.expr==="bow" ? "pale" : ""));
+  R(c,"#1b1530",34,50,5,7); R(c,"#666",35,51,3,5);
+  props.filter(p=>!p.back).forEach(p=>p.draw(c));
+  if(mode==="dim"){ c.fillStyle="rgba(4,6,20,.62)"; c.fillRect(0,0,W,H); c.fillStyle="rgba(255,240,200,.18)"; c.fillRect(54,30,20,28); }
+  if(mode==="glitch"){
+    const img=c.getImageData(0,0,W,H), d=new Uint8ClampedArray(img.data);
+    for(let y=0;y<H;y++){ const sh = (y*7)%11===0 ? 3 : (y*5)%13===0 ? -2 : 0; if(!sh) continue;
+      for(let x=0;x<W;x++){ const sx=clamp(x-sh,0,W-1), i=(y*W+x)*4, j=(y*W+sx)*4; img.data[i]=d[j]; img.data[i+1]=d[j+1]; img.data[i+2]=d[j+2]; } }
+    c.putImageData(img,0,0);
+    [[9,"#45d0ff"],[27,"#ff4d5e"],[48,"#4fdc7a"]].forEach(([y,col])=>{ c.globalAlpha=.5; R(c,col,0,y,W,1); c.globalAlpha=1; });
+  }
 }
 function renderSub(){
   const t = $("stmt").value.trim();
   $("count").textContent = t.length + " / 500 字";
   const parts = t.split(/(?<=[。！？!?])/).filter(s=>s.trim());
   let line = parts.length ? parts[parts.length-1] : "";
-  if(G.tactics.has("TACTIC_BLACK")) line = "（深深嘆一口氣）" + (parts[0]||"");
+  const f=curForm(), pre=f&&f.vis&&f.vis.sub;
+  if(pre) line = pre + (f.vis.mode==="black" ? (parts[0]||"") : line);
   $("sub").textContent = line;
 }
 
@@ -1116,7 +1322,9 @@ function offlineTexts(ctx, ev, endingKey){
 function pickComments(ctx, ev){
   return PERSONA_ORDER.map((p,i)=>{
     let text = ev.offline_comments[i];
-    for(const s of SITUATION_COMMENTS){ if(s.lines[p] && s.when(ctx)){ text=s.lines[p]; break; } }
+    const say = ctx.afk ? null : ctx.tactics.map(id=>findTactic(ev,id)).find(t=>t && t.say && t.say[0]===p);
+    if(say) text = say.say[1];
+    else for(const s of SITUATION_COMMENTS){ if(s.lines[p] && s.when(ctx)){ text=s.lines[p]; break; } }
     return {persona:p, comment:text};
   });
 }
@@ -1129,17 +1337,18 @@ function levenshtein(a,b){
   return prev[n];
 }
 function scoreRound(judge, c){
-  const ev=c.event, ch=CHARACTERS[c.char], text=c.text, ov=ev.tactic_overrides||{};
+  const ev=c.event, ch=CHARACTERS[c.char], text=c.text;
   let S=judge.sincerity, H=judge.shirking, trust=ch.trust, flameAdj=0;
   const flags=[...(judge.red_flags||[])];
   // 策略效果與一致性檢查
-  if(c.tactics.includes("TACTIC_REFUND")){
-    const o=ov.TACTIC_REFUND||{}, words=o.refund_words||["退款","退費","賠償","補償","退還","退錢","退貨"];
-    if(has(text,words) && (!o.need_digit || /\d/.test(text))){ S+=10; trust+=10; } else { S-=10; flags.push("empty_promise"); }
+  for(const id of c.tactics){
+    const f=(findTactic(ev,id)||{}).fx||{};
+    if(f.need){
+      if(has(text,f.need.words) && (!f.need.digit || /\d/.test(text))){ S+=10; trust+=10; } else { S-=10; flags.push("empty_promise"); }
+    }
+    S+=f.S||0; H+=f.H||0; trust+=f.trust||0; flameAdj+=f.flame||0;
+    (f.flags||[]).forEach(x=>{ if(!flags.includes(x)) flags.push(x); });
   }
-  if(c.tactics.includes("TACTIC_OUTSOURCE")){ const o=ov.TACTIC_OUTSOURCE||{}; H+=o.shirking||25; if(o.flag) flags.push(o.flag); }
-  if(c.tactics.includes("TACTIC_MEDICAL")){ const o=ov.TACTIC_MEDICAL||{}; H+=10; if(o.flag) flags.push(o.flag); if(o.extra_flag) flags.push(o.extra_flag); }
-  if(c.tactics.includes("TACTIC_SUE")){ const o=ov.TACTIC_SUE||{}; flags.push("threat_lawsuit"); if(o.extra_flag) flags.push(o.extra_flag); }
   // 角色規則
   let mult=1;
   if(c.char==="CHAR_IVY"){ if(ev.tags.includes("sponsor")) mult*=1.3; if(has(text,["退款","退費","退還","賠償"])) trust+=10; }
@@ -1187,7 +1396,7 @@ const SYSTEM_PROMPT = `你是遊戲《炎上大作戰：危機公關 180 秒》�
 {"inquiries":["answered 或 dodged","...","..."],"sincerity":0到100整數,"shirking":0到100整數,"red_flags":[從 threat_lawsuit、guilt_trip、profanity、contradiction 中選，沒有就空陣列],"ghostwrite_suspect":稿子是否工整完美到像 AI 代寫（true 或 false）,"core_attitude":"10 字內診斷","critical_flaws":["..."],"expert_verdict":"20 字內犀利總結","comments":[{"comment":"..."},六則依人設順序],"headline":"炎上新聞台 FNN 新聞標題，30 字內"}`;
 function userPrompt(c){
   const ch=CHARACTERS[c.char], ev=c.event;
-  const tac = c.tactics.map(id=>TACTICS.find(t=>t.id===id).label).join("、") || "沒有勾選";
+  const tac = c.tactics.map(id=>findTactic(ev,id).label).join("、") || "沒有勾選";
   return `【角色】${ch.name}（${ch.role}，${ch.desc}）
 【翻車事件】${ev.title}
 【爆料內容】${ev.bg_alert}

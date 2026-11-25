@@ -237,3 +237,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：使用者反映每個直播間背景都有同一個圈圈、看不出是什麼。查證是 `index.html` 的 `ringLight()` 在四間直播間都畫同一個置中空心環形補光燈，沒有支架，像主角頭上的光環。依使用者要求「每個補光燈設計都不同」，改為 `LAMPS` 四種造型並新增 `beam()` 半透明光束：小艾為粉色外殼環形燈（暖白 LED 燈珠、U 形支架）、阿凱為電競椅兩側七彩 RGB 燈棒、博士 Leo 為左側柔光箱與三腳架、饅頭為右側紅色燈罩彎管夾燈斜照桌面；中途試過的直立柔光傘與正面柔光傘因看起來像吊燈與電風扇而捨棄。全部畫在 `x 28～100` 以內，以無頭 Chrome 截圖確認手機公審正方形裁切仍完整可見；`verify_app.js` 桌面與手機 FAIL 0，`lint_project.py` ERROR 0。同步改寫 [DESIGN.md](../DESIGN.md) 第二章第 2 點與 [美術設計規格書.md](art/美術設計規格書.md) 第六章圖層表與角色直播間表。另：本工作進行中，提交 `7be849b`（音效預設開啟）連同整份 `index.html` 帶入了本項半成品，本次提交為定稿。
+
+## [2026-11-25 15:57] update | 中繼伺服器部署說明改為實際後台名稱，Worker 已連結 GitHub 自動部署 | #文件
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：使用者依指示在 Cloudflare 將 Worker `firestorm-relay` 以 Workers Builds 連結 GitHub（Path `/worker`、取消 Preview builds）。依實際後台畫面改寫 [中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md)：根目錄設定位於 Advanced settings 的 Path；建置區的 Variables and secrets 不可放金鑰，金鑰改放 Settings 最上方的 Runtime variables and secrets；Bindings 不用手動新增；連結後要等下一次推送才會首次建置。同步更新 `TD-012` 進度。本次推送即用來觸發首次自動部署。

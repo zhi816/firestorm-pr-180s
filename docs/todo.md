@@ -8,7 +8,7 @@
 - **內容**：依 [實作規格書.md](dev/實作規格書.md) 第一、四章，實作 `callLLMJudge()`：呼叫 `https://api.commandcode.ai/provider/v1/chat/completions`（Key 讀自 `localStorage`，日後改走 TD-012 中繼），System Prompt 要求回傳第四章第 2 節之判讀 JSON（逐題回應、誠意、甩鍋、紅旗、代寫嫌疑、敗筆、評語、6 則留言、新聞標題）；撤回後第二次送審附上第一次的敗筆；12 秒逾時、非 200、429 或 JSON 解析失敗時自動改用離線判讀；欄位缺漏以離線結果補齊。先以少量真實呼叫實測預設模型 `deepseek/deepseek-v4.1-flash-fast` 與備選模型之延遲和 JSON 穩定度，結果寫回實作規格書。
 - **完成條件**：有 Key 時可正常判讀並交給前端公式計分；無 Key 與模擬失敗時離線模式順暢通關；`pipeline_status.py` 之 P4 檢核通過；Key 未出現在任何受版控檔案。
 - **關聯**：TD-011
-- **進度**：2026-11-25 第一版 `index.html` 已寫好 `callLLMJudge()`（Command Code 端點、12 秒逾時、代碼框清洗、欄位缺漏以離線結果補齊、撤回時附上次敗筆）與設定彈窗（Key、模型）；**尚未用真實 Key 實測**延遲與 JSON 穩定度。Claude Code by Anthropic。
+- **進度**：2026-11-25 第一版 `index.html` 已寫好 `callLLMJudge()`（Command Code 端點、12 秒逾時、代碼框清洗、欄位缺漏以離線結果補齊、撤回時附上次敗筆）與設定彈窗（Key、模型）。2026-11-25 經 Worker 中繼（`TD-012` 已完成）以預設模型 `deepseek/deepseek-v4.1-flash-fast` 實測 1 次：約 6.2 秒、回傳合法 JSON、欄位齊全；備選模型與玩家自備 Key 路徑尚未實測，留待 `TD-013`、`TD-014` 改完 Prompt 後與 `TD-015` 一併量測。Claude Code by Anthropic。
 - **來源**：[實作規格書.md](dev/實作規格書.md) 第四章；2026-11-25 拆解建檔，Antigravity by Google DeepMind；2026-11-25 遊戲流程 v2 定案後更新，Claude Code by Anthropic。
 
 ### TD-007 | open | app | 實作結局（含隱藏結局）、像素新聞卡、名醫診斷書、最佳紀錄與音效
@@ -44,17 +44,10 @@
 - **進度**：2026-11-25 第一版已完成 `scoreRound()` 與 `offlineJudge()`，並以 5 組稿（甩鍋、誠懇全答、空白神隱、官腔小幫手原稿、撤回後改寫）驗證結局符合預期；係數已依實測下修（見實作規格書第四章）。2026-11-25 已為 10 則事件各補齊 12 則離線留言（每位人設 2 則隨機抽 1 則，少量混入 2026 年台灣 Threads 用語），System Prompt 亦允許 AI 適度用梗。尚缺：試玩後再調門檻。另於 2026-11-25 策略改為每則事件 4 個專屬影片形式＋4 個專屬公關話術（共 80 個，見角色與事件庫第三章），計分改由各指令的 `fx` 資料驅動，話術另附專屬留言；各選項數值仍待實機調手感。Claude Code by Anthropic。
 - **來源**：2026-11-25 使用者同意「LLM 判讀、前端計分」，Claude Code by Anthropic。
 
-### TD-012 | open | deploy | 建置 Cloudflare Worker 中繼伺服器代管 API 金鑰
-- **內容**：依 [實作規格書.md](dev/實作規格書.md) 第七章，於 `worker/` 撰寫 Cloudflare Worker：接收 `{ character, event_id, tactics, statement, revise_of }`，於伺服器端組裝 Prompt、鎖定模型與 `max_tokens`，以加密變數保存 Command Code 金鑰；實作每 IP 每小時與全站每日上限、聲明稿 500 字上限；前端改為優先呼叫 Worker，失敗時退回玩家 Key 或離線模式。Cloudflare 帳號由使用者自行註冊，部署步驟寫成文件交由使用者操作。
-- **完成條件**：其他裝置不輸入 Key 即可取得 AI 判讀；金鑰不在任何受版控檔案與前端回應中；超過上限時前端自動切換離線模式；`lint_project.py` ERROR 0。
-- **進度**：2026-11-25 程式已完成：`worker/`（Worker 主程式、從 `index.html` 抽出 Prompt 與遊戲資料的 `build.mjs`、`wrangler.toml`、SQLite 版 Durable Object 限流）與前端串接（開場探測、公用線路 → 玩家 Key → 離線、429 後暫停 10 分鐘；前端修改已隨提交 `31a9e10` 推送）；本機模擬 Worker 42 項與無頭 Chrome 端到端 16 項測試全過。使用者已在 Cloudflare 建立 Worker `firestorm-relay`，並於 15:50 以 Workers Builds 連結 GitHub（Path `/worker`、只建置 `main`），之後每次推送 `main` 自動部署。尚缺：確認首次自動部署成功、使用者設定金鑰 Secret，再以其他裝置實測真實判讀與延遲。Claude Code by Anthropic。
-- **關聯**：TD-006
-- **來源**：2026-11-25 使用者指示（希望別人不輸入金鑰即可使用使用者的 API，中繼伺服器排入之後的待辦），Claude Code by Anthropic。
-
 ### TD-013 | open | app | 網民大軍與公關裁判長拆成兩個 AI 分頭處理
 - **內容**：依 [期末專案提案.md](proposal/期末專案提案.md) 第四章「雙 AI 智能體」，把目前「一次呼叫、同一支 System Prompt 同時扮演兩個角色」的判讀拆成兩個 AI 分頭處理：【AI 2：公關裁判長】只回傳判讀欄位（`inquiries`、`critical_flaws`、`core_attitude`、`red_flags`、`ghostwrite_suspect`、`sincerity`、`shirking`、`expert_verdict`、`headline`）；【AI 1：網民大軍】只回傳 6 則人設留言。兩支 System Prompt 分開撰寫。建議採序列協同：裁判先跑，再把裁判挑出的敗筆連同聲明稿交給網民大軍，讓留言針對漏洞吐槽；若實測總等待時間過長，改為兩者同時送出（留言不參考敗筆）。玩家自備 Key 的 `callLLMJudge()` 與 Worker 中繼（`TD-012`，`worker/`）兩條路徑都要改。失敗處理：裁判失敗則整局改走離線判讀；只有網民失敗時，留言改用離線留言庫，判讀仍採 AI 結果。同步改寫 [實作規格書.md](dev/實作規格書.md) 第四章第 2、5、6 節（JSON 拆成兩份格式、逾時各自計算），並確認與提案第四章架構圖說法一致。
 - **完成條件**：有 AI 可用時每次送審發出兩次請求，且留言會呼應裁判挑出的敗筆；兩次呼叫分別模擬失敗時遊戲都能順利通關；等待期間倒數暫停；以真實線路實測總等待時間並寫回實作規格書；`lint_project.py` ERROR 0、`verify_app.js` 雙端 FAIL 0。
-- **關聯**：TD-006、TD-012、TD-014
+- **關聯**：TD-006、TD-014
 - **來源**：2026-11-25 使用者指示（盤點 AI 用途與提案對照後，要求兩個 AI 分頭處理，不再由單一呼叫同時扮演兩角），Claude Code by Anthropic。
 
 ### TD-014 | open | app | 公關裁判長改為先挑錯再打分（JSON 欄位順序對齊兩階段思維鏈）
@@ -66,5 +59,5 @@
 ### TD-015 | open | test | 實測評估是否啟用 JSON 模式（`response_format`）
 - **內容**：[實作規格書.md](dev/實作規格書.md) 第四章第 6 節規定呼叫 LLM 時要帶 `response_format: { type: "json_object" }`（JSON 模式，由服務端保證回傳語法正確的 JSON），但目前前端 `callLLMJudge()` 與 Worker（`worker/src/index.js` 組裝請求處）都沒有帶。目前只靠 Prompt 文字要求「只輸出 JSON」，模型多寫說明、少括號或被截斷時解析失敗，該局改走離線。先用真實 Key 對三個候選模型（`deepseek/deepseek-v4.1-flash-fast`、`z-ai/glm-5.3-flash`、`google/gemini-3.8-flash`）各送數份稿，比較帶與不帶此參數時的成功率、延遲與是否回錯誤；再決定：（1）全部支援就直接加上；（2）部分不支援就改成「帶參數被拒絕時拿掉參數重送一次」；（3）效果不明顯就不加，並把規格書該句改掉。前端與 Worker 兩條路徑做法要一致；若 `TD-013` 已拆成兩次呼叫，兩支請求都要評估。
 - **完成條件**：實測結果（各模型是否支援、JSON 解析成功率、延遲）寫回實作規格書第四章第 6 節，程式與規格書說法一致；選定做法後模擬參數被拒絕時遊戲仍能順利通關；`lint_project.py` ERROR 0。
-- **關聯**：TD-006、TD-012、TD-013
+- **關聯**：TD-006、TD-013
 - **來源**：2026-11-25 使用者指示（盤點 AI 用途與提案對照時發現規格書有寫、程式沒做，決定放到後面測試評估），Claude Code by Anthropic。

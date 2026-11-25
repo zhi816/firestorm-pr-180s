@@ -242,3 +242,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：使用者依指示在 Cloudflare 將 Worker `firestorm-relay` 以 Workers Builds 連結 GitHub（Path `/worker`、取消 Preview builds）。依實際後台畫面改寫 [中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md)：根目錄設定位於 Advanced settings 的 Path；建置區的 Variables and secrets 不可放金鑰，金鑰改放 Settings 最上方的 Runtime variables and secrets；Bindings 不用手動新增；連結後要等下一次推送才會首次建置。同步更新 `TD-012` 進度。本次推送即用來觸發首次自動部署。
+
+## [2026-11-25 16:05] test | Worker 中繼伺服器上線實測通過，TD-012 結案 | #LLM串接
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：使用者推送觸發 Workers Builds 首次自動部署成功（約 1 分鐘），Durable Object `LIMITER` 隨部署自動建立；使用者於 Runtime variables and secrets 設定 Secret `COMMAND_CODE_API_KEY` 後，`/health` 回 `"ready":true`。線上實測：來源 `zhi816.github.io` 預檢放行、其他來源 403；以小艾 EVENT_01 誠懇稿送 1 次真實判讀，預設模型約 6.2 秒回傳合法 JSON（三題皆回應、誠意 88、6 則留言與標題齊全，回應不含金鑰）；使用者以手機實玩一局確認可用，免輸入 Key，玩家自備 Key 仍保留為備選。完成並刪除 `TD-012`；實測結果寫入 `TD-006` 進度、實作規格書第七、九章、部署說明第一章與 README 進度。

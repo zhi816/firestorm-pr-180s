@@ -83,7 +83,8 @@ firestorm-pr-180s/
 - [x] `index.html` 第一版：雙端版面、狀態機與撤回閉環、4 位角色、10 則事件、離線判讀與計分、結局新聞卡與診斷書（離線可完整遊玩）
 - [ ] 角色點陣精修（對應 `TD-010`）
 - [ ] 離線判讀與計分公式（對應 `TD-011`）
-- [ ] 串接 Command Code API（對應 `TD-006`），中繼伺服器（對應 `TD-012`）
+- [ ] 串接 Command Code API（對應 `TD-006`）
+- [x] Cloudflare Worker 中繼伺服器：玩家免輸入金鑰即可使用 AI 判讀，失敗時改用玩家自備 Key 或離線模式
 - [ ] Canvas 新聞圖卡與音效（對應 `TD-007`）
 - [x] GitHub Pages 部署（只發布 `index.html`）
 - [ ] 手機實機測試、全流程驗收與 Demo 影片（對應 `TD-008`、`TD-009`）

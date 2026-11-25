@@ -54,6 +54,7 @@
   6. 同步改寫 [實作規格書.md](dev/實作規格書.md) 第四章第 2、5、6 節（JSON 拆成兩份格式、逾時各自計算）與第七章，並確認與提案第四章架構圖說法一致。
 - **完成條件**：有 AI 可用時每次送審依序發出兩次請求，留言引用聲明稿原句、裁判可引用網友留言；兩次呼叫分別模擬失敗時遊戲都能順利通關；以真實線路實測總等待時間並寫回實作規格書；`lint_project.py` ERROR 0、`verify_app.js` 雙端 FAIL 0。
 - **負責**：Claude Code by Anthropic（於獨立分支實作，完成後合併回 main，避免與同時修改 `index.html` 的其他工作階段互相覆蓋）。
+- **進度**：2026-11-25 程式與文件已完成（分支 `claude/td-013-split-ai`，併入 main）：`index.html` PROMPT 區塊（`CROWD_PROMPT`、`JUDGE_PROMPT`、`crowdPrompt()`、`judgePrompt()`）、依序呼叫與各自退回、Worker `/crowd`、`/judge` 與上限加倍、`build.mjs` 改抽 PROMPT 區塊並試跑；實作規格書第四章第 2、5、6 節與第七章、部署說明已改寫。Worker 模擬 30 項、無頭 Chrome 端到端 19 項全過。尚缺：部署後以真實線路實測兩次呼叫總等待時間並寫回規格書。Claude Code by Anthropic。
 - **關聯**：TD-006、TD-014、TD-016
 - **來源**：2026-11-25 使用者指示（盤點 AI 用途與提案對照後，要求兩個 AI 分頭處理，不再由單一呼叫同時扮演兩角）；2026-11-25 使用者決定網民先、裁判後，並確認 Prompt 設計方向；Claude Code by Anthropic。
 

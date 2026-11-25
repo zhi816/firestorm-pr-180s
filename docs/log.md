@@ -217,3 +217,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：`TD-012` 程式部分完成。使用者已自行在 Cloudflare 以 Hello World 範本建立 Worker `firestorm-relay`。新增 `worker/`：`src/index.js`（`GET /health`、`POST /judge`；驗證角色、事件、策略與 500 字上限；由 Worker 組裝 Prompt、鎖定模型與 `max_tokens`；回應只回傳判讀 JSON 白名單欄位；SQLite 版 Durable Object 限流，每 IP 每小時 30 次、全站每日 300 次可由後台變數調整，IP 只存雜湊；只接受 GitHub Pages 與本機來源；日誌不記聲明稿）、`build.mjs`（從 `index.html` 原樣抽出 `SYSTEM_PROMPT`、`userPrompt()` 與角色／事件／策略資料產生 `src/prompt-data.js`，部署前自動執行）、`wrangler.toml`。前端 `index.html` 新增 `RELAY_URL`、開場探測、送審順序公用線路 → 玩家 Key → 離線、429 後暫停 10 分鐘，並更新設定彈窗與封面說明文字；這部分修改因另一工作階段同時提交 `index.html`，已隨提交 `31a9e10` 推送。新增 [中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md)，改寫實作規格書第一、七、九章，同步 `AGENTS.md`、`README.md`、`docs/index.md`。以 Node 模擬 Worker 執行環境跑 42 項測試、以無頭 Chrome 跑前端加 Worker 端到端 16 項（正常判讀、撤回附上次敗筆、超過上限、未設金鑰、Worker 無回應、上游逾時、`verify_app.js` 雙端），全數通過。尚待使用者部署程式碼並設定金鑰 Secret 後實測。
+
+## [2026-11-25 15:35] fix | 亂碼聲明稿比照空白判神隱 | #狀態機
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：使用者盤點 AI 用途並與提案對照後，要求補上提案「空白或亂碼判神隱」中缺少的亂碼判定。`index.html` 新增 `isGibberish()`（規則寫入 [實作規格書.md](dev/實作規格書.md) 第二章規則 3）：只有符號、數字或注音、注音文、同字或同一小段重複、英文鍵盤亂按，送出時比照空白判神隱，不送 AI、不能撤回，炎上度 100、結局身敗名裂。敗筆依倒數歸零、空白、亂碼分別顯示（原本空白送出也顯示「時間到了」），亂碼另加 6 位人設專屬留言；玩法說明改為「時間到、空白或亂碼送出」。同一回合另行提交待辦 `TD-013`（網民大軍與公關裁判長拆成兩個 AI）與 `TD-014`（裁判先挑錯再打分）。以無頭 Chrome 驗證：26 組亂碼與非亂碼單元測試（含官腔小幫手原稿、中英混合與注音梗「ㄏㄏ」不誤判）、亂碼／空白／倒數歸零／正常稿四種送出流程、`verify_app.js` 雙端 FAIL 0、全程無 JS 錯誤。

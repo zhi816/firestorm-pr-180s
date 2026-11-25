@@ -468,7 +468,7 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
     <p>看完裁決後可以撤回一次，回到寫稿並從剩餘秒數繼續。代價是截圖已經流出：炎上度 +10、粉絲 −100,000。等 AI 回應時不計時。</p>
     <h3>小心</h3>
     <ul>
-      <li>時間到或空白送出，判定神隱。</li>
+      <li>時間到、空白或亂碼送出，判定神隱。</li>
       <li>少於 20 字判定敷衍。</li>
       <li>「AI 官腔小幫手」會扣誠意；寫得太完美也可能被抓包是 AI 代寫。</li>
     </ul>
@@ -810,6 +810,7 @@ const CRISIS_EVENTS = [
 
 /* 情境留言：符合條件時優先取代該人設的事件留言 */
 const SITUATION_COMMENTS = [
+  {when:c=>c.garbled, lines:{conan:"我拿去解碼三遍，確定這不是任何一種人類語言。",black:"打一串亂碼就想混過去？退訂。",fan:"哥哥一定是太難過，手在鍵盤上發抖……",vendor:"這份聲明法務看不懂，我們直接寄存證信函。",gossip:"今晚開台破解這段密碼，留友看。",meme:"這串亂碼已經做成梗圖，標題叫〈鍵盤也想退訂〉。"}},
   {when:c=>c.afk, lines:{conan:"人呢？聲明稿空白到我以為是新的極簡主義。",black:"神隱就是最好的答案，退訂。",fan:"哥哥一定在寫很長的道歉信……對吧？",vendor:"我們的法務已經寫好了，你的聲明還沒好？",gossip:"180 秒過去了，直播間已經比你的聲明熱鬧。",meme:"「沉默是金」，可惜你賠的是粉絲。"}},
   {when:c=>c.flags.includes("profanity"), lines:{black:"道歉文裡還能罵髒話，我真的佩服。"}},
   {when:c=>c.flags.includes("threat_lawsuit"), lines:{black:"要告就告啊，我等傳票等到天荒地老。",gossip:"律師函警告已經截圖，今晚一起來讀法條。"}},
@@ -1473,6 +1474,26 @@ const has = (t, words) => words.some(w => t.includes(w));
 const count = (t, words) => words.filter(w => t.includes(w)).length;
 const PROFANITY = ["幹","靠北","媽的","他媽","智障","白痴","白癡","去死","操","屁啦","垃圾"];
 const AI_WORDS = ["首先","其次","最後","綜上所述","值得注意的是","總而言之","總結來說","此外"];
+/* 亂碼判定（docs/dev/實作規格書.md 第二章規則 3）：沒有可讀內容的聲明稿比照空白判神隱 */
+const CJK_RE = /[\u3400-\u9fff\uf900-\ufaff]/;
+function isGibberish(text){
+  const t = text.replace(/\s/g,"").toLowerCase();
+  if(!t) return false;
+  const core = [...t].filter(ch => CJK_RE.test(ch) || /[a-z]/.test(ch)).join("");
+  const zhuyin = (t.match(/[\u3105-\u312f\u31a0-\u31bf]/g)||[]).length;
+  if(!core) return true;                                   // 只有符號、數字、注音或表情
+  if(zhuyin > core.length) return true;                    // 大半是沒選字的注音
+  const uniq = new Set(core).size;
+  if((uniq===1 && core.length>=3) || (uniq===2 && core.length>=4)) return true;   // 啊啊啊、哈哈哈哈
+  if(core.length>=6 && /^(.{1,6}?)\1{2,}$/.test(core)) return true;               // 同一小段重複三次以上
+  const letters = core.replace(new RegExp(CJK_RE.source,"g"),"");
+  if(letters.length*2 > core.length){                      // 以英文字母為主：看像不像鍵盤亂按
+    const vowels = (letters.match(/[aeiouy]/g)||[]).length;
+    if(letters.length>=6 && vowels/letters.length < .1) return true;
+    if((text.toLowerCase().match(/[a-z]+/g)||[]).some(w => /[^aeiouy]{6,}/.test(w))) return true;
+  }
+  return false;
+}
 function offlineJudge(text, ev){
   const inquiries = ev.inquiries.map(i => has(text, i.keywords) ? "answered" : "dodged");
   const answered = inquiries.filter(x=>x==="answered").length;
@@ -1489,7 +1510,7 @@ function offlineJudge(text, ev){
 function offlineTexts(ctx, ev, endingKey){
   // 紅旗與甩鍋優先（三大質疑的閃避已在裁決頁逐題顯示），不足 3 條再補閃避題
   const flaws=[];
-  if(ctx.afk) flaws.push("時間到了還沒發聲明，直接被當成神隱。");
+  if(ctx.afk) flaws.push(ctx.garbled ? "聲明稿是一串亂碼，網友一致判定你在裝死。" : ctx.timeout ? "時間到了還沒發聲明，直接被當成神隱。" : "交出一份空白聲明，直接被當成神隱。");
   ctx.flags.forEach(f=>{ if(RED_FLAG_TEXT[f] && !flaws.includes(RED_FLAG_TEXT[f])) flaws.push(RED_FLAG_TEXT[f]); });
   if(ctx.H>=60) flaws.push("責任推得比道歉還多，道歉一句，甩鍋三句。");
   if(ctx.helperUsed) flaws.push("用官腔小幫手的套話，網友一眼就看出來。");
@@ -1665,10 +1686,11 @@ function normalizeLLM(j, off){
 /* ==================== 發布與公審 ==================== */
 async function publish(timeout=false){
   const text = $("stmt").value.trim();
-  const afk = timeout || text.length===0;
+  const garbled = !timeout && isGibberish(text);
+  const afk = timeout || text.length===0 || garbled;
   stopClock(); clearTimers();
   if(document.activeElement) document.activeElement.blur();
-  const c = {char:G.char, event:G.event, tactics:[...G.tactics], text, afk, helperUsed:G.helperUsed, revised:G.revised,
+  const c = {char:G.char, event:G.event, tactics:[...G.tactics], text, afk, garbled, timeout, helperUsed:G.helperUsed, revised:G.revised,
              prevFlaws: G.revised && G.first ? G.first.texts.critical_flaws : null};
   setState(STATE_AUDITING);
   $("feed").innerHTML=""; $("chat").innerHTML=""; $("chatAllN").textContent="0"; G.shown=0;
@@ -1688,7 +1710,7 @@ async function publish(timeout=false){
   } else $("apiNote").textContent = aiReady() ? "" : (RELAY_URL ? "離線模式（公用 AI 線路休息中）" : "離線模式（未設定 API Key）");
   if(G.state!==STATE_AUDITING) return;
   const r = scoreRound(judge, c);
-  const ctx = {afk, flags:r.flags, tactics:c.tactics, helperUsed:c.helperUsed, ghost:judge.ghostwrite_suspect, dodged:r.D, S:r.S, H:r.H, judge, text};
+  const ctx = {afk, garbled, timeout, flags:r.flags, tactics:c.tactics, helperUsed:c.helperUsed, ghost:judge.ghostwrite_suspect, dodged:r.D, S:r.S, H:r.H, judge, text};
   const texts = offlineTexts(ctx, G.event, r.ending);
   const E = ENDINGS[r.ending];
   const fin = {

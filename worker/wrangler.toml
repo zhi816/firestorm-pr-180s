@@ -1,0 +1,25 @@
+# 炎上大作戰 Cloudflare Worker 中繼伺服器設定（部署步驟見 docs/dev/中繼伺服器部署說明.md）
+# name 必須與 Cloudflare 後台的 Worker 名稱一致。
+name = "firestorm-relay"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# 保留在 Cloudflare 後台設定的一般變數（IP_HOURLY_LIMIT 等），部署時不覆蓋。
+# 金鑰 COMMAND_CODE_API_KEY 為 Secret，部署本來就不會動到它。
+keep_vars = true
+
+# 每次部署前，先從根目錄 index.html 重新產生 src/prompt-data.js
+[build]
+command = "node build.mjs"
+
+# 限流計數器：SQLite 版 Durable Object（免費方案可用）
+[[durable_objects.bindings]]
+name = "LIMITER"
+class_name = "RateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiter"]
+
+[observability]
+enabled = true

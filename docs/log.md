@@ -212,3 +212,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：使用者看到 GitHub 提交列表出現紅叉。查證三次失敗（f77d46c、4411a3c、31a9e10）都是 `deploy-pages` 回報「No artifacts named github-pages」，但該次執行的成品其實已上傳（API 查得到），同一設定另有三次成功，判定是同一工作內成品尚未登錄完成的時間差；推送本身正常。因 31a9e10 發布失敗，線上版停在 5592e57，缺背景音樂與手機 App 模式。`.github/workflows/pages.yml` 改為 `build`（打包上傳）與 `deploy`（`needs: build`）兩個工作，發布失敗時等待 30 秒重試一次；本次修改流程檔即觸發重新發布，補上前述兩項功能。與 `TD-009` 部署相關。
+
+## [2026-11-25 15:32] feat | Cloudflare Worker 中繼伺服器程式完成，前端改為優先走公用 AI 線路 | #LLM串接
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：`TD-012` 程式部分完成。使用者已自行在 Cloudflare 以 Hello World 範本建立 Worker `firestorm-relay`。新增 `worker/`：`src/index.js`（`GET /health`、`POST /judge`；驗證角色、事件、策略與 500 字上限；由 Worker 組裝 Prompt、鎖定模型與 `max_tokens`；回應只回傳判讀 JSON 白名單欄位；SQLite 版 Durable Object 限流，每 IP 每小時 30 次、全站每日 300 次可由後台變數調整，IP 只存雜湊；只接受 GitHub Pages 與本機來源；日誌不記聲明稿）、`build.mjs`（從 `index.html` 原樣抽出 `SYSTEM_PROMPT`、`userPrompt()` 與角色／事件／策略資料產生 `src/prompt-data.js`，部署前自動執行）、`wrangler.toml`。前端 `index.html` 新增 `RELAY_URL`、開場探測、送審順序公用線路 → 玩家 Key → 離線、429 後暫停 10 分鐘，並更新設定彈窗與封面說明文字；這部分修改因另一工作階段同時提交 `index.html`，已隨提交 `31a9e10` 推送。新增 [中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md)，改寫實作規格書第一、七、九章，同步 `AGENTS.md`、`README.md`、`docs/index.md`。以 Node 模擬 Worker 執行環境跑 42 項測試、以無頭 Chrome 跑前端加 Worker 端到端 16 項（正常判讀、撤回附上次敗筆、超過上限、未設金鑰、Worker 無回應、上游逾時、`verify_app.js` 雙端），全數通過。尚待使用者部署程式碼並設定金鑰 Secret 後實測。

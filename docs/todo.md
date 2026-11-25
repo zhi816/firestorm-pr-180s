@@ -47,6 +47,7 @@
 ### TD-012 | open | deploy | 建置 Cloudflare Worker 中繼伺服器代管 API 金鑰
 - **內容**：依 [實作規格書.md](dev/實作規格書.md) 第七章，於 `worker/` 撰寫 Cloudflare Worker：接收 `{ character, event_id, tactics, statement, revise_of }`，於伺服器端組裝 Prompt、鎖定模型與 `max_tokens`，以加密變數保存 Command Code 金鑰；實作每 IP 每小時與全站每日上限、聲明稿 500 字上限；前端改為優先呼叫 Worker，失敗時退回玩家 Key 或離線模式。Cloudflare 帳號由使用者自行註冊，部署步驟寫成文件交由使用者操作。
 - **完成條件**：其他裝置不輸入 Key 即可取得 AI 判讀；金鑰不在任何受版控檔案與前端回應中；超過上限時前端自動切換離線模式；`lint_project.py` ERROR 0。
+- **進度**：2026-11-25 程式已完成：`worker/`（Worker 主程式、從 `index.html` 抽出 Prompt 與遊戲資料的 `build.mjs`、`wrangler.toml`、SQLite 版 Durable Object 限流）與前端串接（開場探測、公用線路 → 玩家 Key → 離線、429 後暫停 10 分鐘；前端修改已隨提交 `31a9e10` 推送）；本機模擬 Worker 42 項與無頭 Chrome 端到端 16 項測試全過。使用者已在 Cloudflare 建立 Worker `firestorm-relay`（目前仍為 Hello World 範本）。尚缺：使用者依 [中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md) 部署程式碼並設定金鑰 Secret，再以其他裝置實測真實判讀與延遲。Claude Code by Anthropic。
 - **關聯**：TD-006
 - **來源**：2026-11-25 使用者指示（希望別人不輸入金鑰即可使用使用者的 API，中繼伺服器排入之後的待辦），Claude Code by Anthropic。
 

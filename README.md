@@ -26,7 +26,7 @@
 
 ## 技術概要
 
-- 單一 `index.html`（HTML + CSS + JS），不需要 npm 建置；可選配 Cloudflare Worker 中繼程式代管金鑰（規劃中）
+- 單一 `index.html`（HTML + CSS + JS），不需要 npm 建置；另含 Cloudflare Worker 中繼程式（`worker/`）代管金鑰，玩家不必輸入 Key 即可使用 AI 判讀
 - LLM：Command Code Provider API（OpenAI 相容格式）。AI 只負責判讀與寫留言，分數與結局由前端固定公式計算
 - 沒有 Key 或 API 故障時，自動改用離線模式（關鍵字判讀＋同一套公式），任何人點開都能玩
 - 美術方向：像素 RPG × 社群介面（原則與決策見 [DESIGN.md](DESIGN.md)，細節見 [美術設計規格書](docs/art/美術設計規格書.md)）
@@ -39,7 +39,8 @@ firestorm-pr-180s/
 ├── AGENTS.md                 AI 協作與維護手冊（規範唯一真實來源）
 ├── DESIGN.md                 美術與介面方向紀錄（已定／待決／否決／版本歷程）
 ├── CLAUDE.md                 Claude Code 自動載入入口（指向 AGENTS.md）
-├── index.html                遊戲本體（尚未建立）
+├── index.html                遊戲本體（單檔，部署於 GitHub Pages）
+├── worker/                   Cloudflare Worker 中繼伺服器（代管金鑰、組裝 Prompt、限流）
 ├── .agents/skills/           開發、稽核與 Git 同步專屬 Skill 正本
 ├── .claude/skills/           Claude Code 轉介檔（指向 .agents/skills/）
 └── docs/

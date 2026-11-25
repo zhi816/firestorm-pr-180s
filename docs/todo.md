@@ -47,5 +47,5 @@
 ### TD-015 | open | test | 實測評估是否啟用 JSON 模式（`response_format`）
 - **內容**：[實作規格書.md](dev/實作規格書.md) 第四章第 6 節規定呼叫 LLM 時要帶 `response_format: { type: "json_object" }`（JSON 模式，由服務端保證回傳語法正確的 JSON），但目前前端 `callLLMJudge()` 與 Worker（`worker/src/index.js` 組裝請求處）都沒有帶。目前只靠 Prompt 文字要求「只輸出 JSON」，模型多寫說明、少括號或被截斷時解析失敗，該局改走離線。先用真實 Key 對三個候選模型（`deepseek/deepseek-v4.1-flash-fast`、`z-ai/glm-5.3-flash`、`google/gemini-3.8-flash`）各送數份稿，比較帶與不帶此參數時的成功率、延遲與是否回錯誤；再決定：（1）全部支援就直接加上；（2）部分不支援就改成「帶參數被拒絕時拿掉參數重送一次」；（3）效果不明顯就不加，並把規格書該句改掉。前端與 Worker 兩條路徑做法要一致；若 `TD-013` 已拆成兩次呼叫，兩支請求都要評估。
 - **完成條件**：實測結果（各模型是否支援、JSON 解析成功率、延遲）寫回實作規格書第四章第 6 節，程式與規格書說法一致；選定做法後模擬參數被拒絕時遊戲仍能順利通關；`lint_project.py` ERROR 0。
-- **關聯**：TD-006、TD-013
+- **關聯**：TD-006
 - **來源**：2026-11-25 使用者指示（盤點 AI 用途與提案對照時發現規格書有寫、程式沒做，決定放到後面測試評估），Claude Code by Anthropic。

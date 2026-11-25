@@ -35,7 +35,7 @@ const MODEL_EFFORT = {
   "Qwen/Qwen3.8-Flash": "low",
   "z-ai/glm-5.3-flash": "low"
 };
-const UPSTREAM_TIMEOUT_MS = 11000;   // 前端整體逾時 12 秒，這裡留 1 秒餘裕
+const UPSTREAM_TIMEOUT_MS = 30000;   // 診斷 Qwen3.7 / MiMo 實際耗時與 token 用量，確認後再調回合理上限
 const STATEMENT_MAX = 500;           // 與 index.html 聲明稿輸入框 maxlength 一致
 const COMMENT_MAX = 80;              // 網民留言每則上限（與前端 normalizeCrowd() 一致）
 const BODY_MAX = 8192;

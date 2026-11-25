@@ -910,7 +910,7 @@ const EVENT_TACTICS = {
            {label:"推給剪輯師惡意剪接", fx:{H:25}, say:["vendor","剪輯師：那天我請假，那是直播原檔。"]},
            {label:"嗆不爽可以不要看", fx:{H:20,flame:10}, say:["black","好，不看了，順便把斗內退一下。"]}]},
   EVENT_06:{
-    forms:[{label:"抱著貓一起鞠躬", fx:{S:5}, vis:{expr:"bow",props:["cat"]}},
+    forms:[{label:"抱著貓一起鞠躬", fx:{S:5}, vis:{expr:"bow",props:["cat_hold"]}},
            {label:"直播現場重新抽獎", fx:{flame:-5}, vis:{expr:"normal",props:["lottery"]}},
            {label:"戴墨鏡說貓不是我的", fx:{flags:["contradiction"]}, vis:{expr:"shades",props:["cat"]}},
            {label:"全程用變聲器講話", fx:{H:10}, vis:{mode:"glitch",expr:"normal",props:["vc"],sub:"（機器人聲）"}}],
@@ -1291,46 +1291,48 @@ function buildCmds(){
 const vctx = () => $("video").getContext("2d");
 const R = (c,col,x,y,w,h) => { c.fillStyle=col; c.fillRect(x,y,w,h); };
 const glow = (c,col,a,x,y,w,h) => { c.globalAlpha=a; R(c,col,x,y,w,h); c.globalAlpha=1; };
-/* 補光燈：每間直播間各一種造型（2026-11-25 使用者要求），都畫在 x 28～100 以內，手機公審裁成正方形時仍看得到 */
+/* 補光燈：每間直播間各一種造型（2026-11-25 使用者要求），都畫在 x 28～100 以內，手機公審裁成正方形時仍看得到。
+   畫在背景道具之後、主角之前（燈站在牆前）；off 為關燈狀態（關燈影片形式用） */
 const LAMPS = {
-  ring(c){ // 美妝環形燈：粉色外殼、一圈 LED 燈珠、U 形支架立在化妝台上
+  ring(c,off){ // 美妝環形燈：粉色外殼、一圈 LED 燈珠、U 形支架立在化妝台上
     const cx=64, cy=30;
     for(let y=-22;y<=22;y++) for(let x=-22;x<=22;x++){
       const d=Math.hypot(x,y), a=(Math.atan2(y,x)+Math.PI)/(Math.PI*2)*24;
-      if(d<=17) glow(c,"#fff6d0",.22,cx+x,cy+y,1,1);
+      if(d<=17){ if(!off) glow(c,"#fff6d0",.22,cx+x,cy+y,1,1); }
       else if(d<=18) R(c,"#f3a8c8",cx+x,cy+y,1,1);
-      else if(d<=20.2) R(c, d>18.6 && d<19.8 && a%1<.5 ? "#ffffff" : "#ffd98a", cx+x,cy+y,1,1);
+      else if(d<=20.2) R(c, d>18.6 && d<19.8 && a%1<.5 ? (off?"#e0d6dc":"#ffffff") : (off?"#c9b8c0":"#ffd98a"), cx+x,cy+y,1,1);
       else if(d<=21.4) R(c,"#d9699a",cx+x,cy+y,1,1);
     }
     R(c,"#b9789a",41,32,1,19); R(c,"#b9789a",87,32,1,19); R(c,"#b9789a",41,51,47,1); R(c,"#b9789a",63,52,2,6);
     R(c,"#8a4f6c",40,29,3,3); R(c,"#8a4f6c",86,29,3,3);
   },
-  tubes(c){ // 遊戲 RGB 燈棒：電競椅左右各立一支，七彩漸層往外泛光
+  tubes(c,off){ // 遊戲 RGB 燈棒：電競椅左右各立一支，七彩漸層往外泛光
     const rgb=["#ff4d5e","#ff8a1f","#f5b82e","#4fdc7a","#45d0ff","#7a4fdc","#c86bff"];
     [[44,0],[81,3]].forEach(([x,o])=>{
       for(let y=10;y<40;y++){ const col=rgb[(Math.floor((y-10)/4)+o)%rgb.length];
+        if(off){ R(c,"#4a4a66",x,y,2,1); continue; }
         R(c,col,x,y,2,1); glow(c,col,.4,x-1,y,1,1); glow(c,col,.4,x+2,y,1,1); glow(c,col,.15,x-2,y,1,1); glow(c,col,.15,x+3,y,1,1); }
       R(c,"#2a2a40",x,8,2,2); R(c,"#2a2a40",x,40,2,2);
       R(c,"#3a3a55",x,42,1,15); R(c,"#3a3a55",x-2,57,5,1);
     });
   },
-  softbox(c){ // 知識型柔光箱：黑色箱體往後收窄、白色柔光布朝向主角、三腳架
+  softbox(c,off){ // 知識型柔光箱：黑色箱體往後收窄、白色柔光布朝向主角、三腳架
     [[34,13,7],[35,12,9],[36,11,11],[37,10,13],[38,9,15]].forEach(([x,y,h])=>R(c,"#22222a",x,y,1,h));
     R(c,"#3a3a44",35,12,3,1); R(c,"#111116",32,14,2,5);
-    R(c,K,39,8,10,17); R(c,"#dfe6ee",40,9,8,15); R(c,"#ffffff",41,11,6,11);
+    R(c,K,39,8,10,17); R(c,off?"#9aa0aa":"#dfe6ee",40,9,8,15); R(c,off?"#aab0ba":"#ffffff",41,11,6,11);
     R(c,"#55555f",43,25,1,28); R(c,"#55555f",42,25,3,1);
     [[42,53],[41,54],[40,55],[39,56],[44,53],[45,54],[46,55],[47,56]].forEach(([x,y])=>R(c,"#55555f",x,y,1,1));
     R(c,"#55555f",43,53,1,5);
   },
-  gooseneck(c){ // 美食彎管夾燈：底座夾在料理台、彎管伸出、紅色燈罩斜照桌上的菜
+  gooseneck(c,off){ // 美食彎管夾燈：底座夾在料理台、彎管伸出、紅色燈罩斜照桌上的菜
     const ax=82, ay=38, n=Math.hypot(-.82,.57), dx=-.82/n, dy=.57/n;
-    beam(c,"#ffe08a",.22,ax,ay,dx,dy,26,40);
+    if(!off) beam(c,"#ffe08a",.22,ax,ay,dx,dy,26,40);
     R(c,"#55555f",90,37,1,19); [[86,35],[87,35],[88,35],[89,36]].forEach(([x,y])=>R(c,"#55555f",x,y,1,1));
     R(c,"#3a3a44",87,55,7,2); R(c,"#8a8a96",87,55,7,1);
     for(let y=-7;y<=7;y++) for(let x=-7;x<=7;x++){
       const u=x*dx+y*dy, v=Math.abs(x*dy-y*dx);
       if(u>=-5 && u<=0 && v<=1.5+(u+5)*.62) R(c, u>-.9 ? "#ff8a8a" : v<1 && u<-3 ? "#a51c30" : "#d33a4a", ax+x,ay+y,1,1);
-      else if(u>0 && u<=1.3 && v<=3.8) R(c,"#fff6d0",ax+x,ay+y,1,1);
+      else if(u>0 && u<=1.3 && v<=3.8) R(c,off?"#8a8a96":"#fff6d0",ax+x,ay+y,1,1);
     }
   }
 };
@@ -1344,7 +1346,8 @@ function beam(c,col,a,ax,ay,dx,dy,len,deg){
   }
   c.globalAlpha=1;
 }
-/* 每位角色各自的直播間背景 */
+/* 每位角色各自的直播間背景（補光燈另由 ROOM_LAMP 指定，renderVideo 畫在背景道具之後） */
+const ROOM_LAMP = {CHAR_IVY:"ring", CHAR_KAI:"tubes", CHAR_LEO:"softbox", CHAR_MANTOU:"gooseneck"};
 const ROOMS = {
   CHAR_IVY(c){ // 美妝：粉色條紋牆、化妝鏡燈泡框、保養品層架、愛心霓虹燈
     for(let x=0;x<128;x++) R(c, x%8<4?"#f0bfd2":"#e8afc5", x,0,1,58);
@@ -1356,7 +1359,6 @@ const ROOMS = {
     [["#ff6fae",90,18,4,8],["#c86bff",96,20,3,6],["#f5b82e",101,16,4,10],["#ffffff",107,19,3,7],["#ff8a8a",112,17,5,9],["#8f9bd0",119,21,3,5]].forEach(([col,x,y,w,h])=>{ R(c,col,x,y,w,h); R(c,K,x,y,w,1); });
     [[0,1,1,0,0,1,1,0],[1,1,1,1,1,1,1,1],[1,1,1,1,1,1,1,1],[0,1,1,1,1,1,1,0],[0,0,1,1,1,1,0,0],[0,0,0,1,1,0,0,0]].forEach((row,y)=>row.forEach((v,x)=>{ if(v) R(c,"#ff3f8e",102+x,5+y,1,1); }));
     R(c,"#ffffff",0,58,128,2); R(c,"#e3d5ea",0,60,128,12); R(c,"#cdbcd8",0,66,128,1);
-    LAMPS.ring(c);
   },
   CHAR_KAI(c){ // 遊戲實況：深色房間、RGB 燈條、雙螢幕、電競椅
     R(c,"#141a33",0,0,128,58);
@@ -1371,7 +1373,6 @@ const ROOMS = {
     R(c,"#2b2b40",0,58,128,14); R(c,"#3a3a55",0,58,128,2);
     for(let x=84;x<124;x++) R(c, rgb[Math.floor(x/3)%rgb.length], x,62,1,1);
     R(c,"#111",84,61,40,1);
-    LAMPS.tubes(c);
   },
   CHAR_LEO(c){ // 知識型：深綠書房、書架、寫滿算式的白板、地球儀
     R(c,"#26403a",0,0,128,58);
@@ -1385,7 +1386,6 @@ const ROOMS = {
     R(c,"#7a5232",0,58,128,14); R(c,"#9a6a42",0,58,128,2);
     R(c,"#6b4a2e",112,55,6,3); R(c,"#45d0ff",109,45,12,10); R(c,"#4fdc7a",111,47,4,3); R(c,"#4fdc7a",116,50,3,3); R(c,"#c9c9d4",114,43,1,12);
     R(c,"#f5b82e",20,46,8,4); R(c,"#3a3a44",23,50,2,8);
-    LAMPS.softbox(c);
   },
   CHAR_MANTOU(c){ // 美食：白磁磚廚房、吊鍋、黑板菜單、冒煙湯鍋
     R(c,"#eef0e6",0,0,128,58);
@@ -1399,53 +1399,75 @@ const ROOMS = {
     R(c,"#b8bcc8",0,58,128,14); R(c,"#dfe2ea",0,58,128,2); R(c,"#9a9eaa",0,64,128,1);
     R(c,"#55555f",98,46,22,12); R(c,"#8f9bd0",99,47,20,10); R(c,"#3a3a44",96,47,2,3); R(c,"#3a3a44",120,47,2,3);
     [[104,40],[107,36],[110,41],[113,37],[106,32],[112,31]].forEach(([x,y])=>R(c,"#ffffff",x,y,2,2));
-    LAMPS.gooseneck(c);
   }
 };
 /* 影片形式道具：back 畫在主角後面，其餘畫在主角前面 */
 const BOSS_PAL = {...LAW_PAL, h:"#55555f", d:"#3a3a48", D:"#55555f", r:"#f5b82e"};
 const INSP_PAL = {...LAW_PAL, h:"#1f3a7a", d:"#e8ecf4", D:"#c9c9d4", w:"#45d0ff", r:"#1f3a7a"};
 const PROPS = {
-  tshirts:{draw(c){ [["#ffffff",4,48],["#ff6fae",8,44],["#45d0ff",4,40],["#f5b82e",10,36],["#ffffff",92,48],["#4fdc7a",96,44],["#c86bff",90,40]].forEach(([col,x,y])=>{ R(c,K,x,y,22,1); R(c,col,x,y+1,22,4); R(c,"#ff4d5e",x+18,y+1,2,2); }); }},
-  tshirt_hang:{back:true, draw(c){ R(c,"#8a8a96",88,10,30,1); R(c,"#ffffff",92,12,22,4); R(c,"#ffffff",96,16,14,18); R(c,"#c9c9d4",96,33,14,1); R(c,"#ff4d5e",110,18,4,6); R(c,K,111,20,2,1); }},
+  tshirts:{draw(c){ [[27,["#ffffff","#ff6fae","#45d0ff","#f5b82e"]],[80,["#ffffff","#4fdc7a","#c86bff","#ff6fae"]]].forEach(([x0,cols])=>cols.forEach((col,j)=>{ const x=x0+(j%2), y=54-j*4; R(c,K,x,y,21,1); R(c,col,x,y+1,21,3); R(c,"#ff4d5e",x+16,y+1,2,2); })); }},
+  tshirt_hang:{back:true, draw(c){ R(c,"#8a8a96",78,10,30,1); R(c,"#ffffff",82,12,22,4); R(c,"#ffffff",86,16,14,18); R(c,"#c9c9d4",86,33,14,1); R(c,"#ff4d5e",95,17,4,6); R(c,K,96,19,2,1); }},
   scissors:{draw(c){ R(c,"#c9c9d4",76,44,8,1); R(c,"#c9c9d4",76,47,8,1); R(c,"#c9c9d4",83,45,2,2); R(c,"#ff4d5e",73,43,3,3); R(c,"#ff4d5e",73,47,3,3); }},
-  tshirt_on:{draw(c){ R(c,"#ffffff",53,52,22,6); R(c,"#ffffff",51,54,2,4); R(c,"#ffffff",75,54,2,4); R(c,"#ff4d5e",70,53,4,4); R(c,K,72,52,1,1); R(c,"#1b1530",57,54,5,1); }},
+  tshirt_on:{draw(c){ R(c,K,51,51,9,1); R(c,K,68,51,9,1); R(c,K,49,53,2,5); R(c,K,77,53,2,5); R(c,"#ffffff",52,52,24,6); R(c,"#ffffff",51,53,26,5); R(c,"#c9c9d4",60,52,8,1);
+    R(c,K,58,54,12,3); R(c,"#ffffff",59,55,10,1); R(c,"#ff4d5e",71,53,3,4); R(c,K,72,52,1,1); }},
   cake:{draw(c){ R(c,K,55,49,18,9); R(c,"#ffffff",56,50,16,7); R(c,"#ff6fae",56,53,16,2); [59,64,69].forEach(x=>{ R(c,"#d33a4a",x,45,1,5); R(c,"#f5b82e",x,43,1,2); }); }},
-  crowd4:{draw(c){ [[6,"#d33a4a"],[22,"#45d0ff"],[94,"#4fdc7a"],[110,"#c86bff"]].forEach(([x,col],i)=>{ draw(c, HEAD, {k:K,s:"#f2c6a0",h:["#3a2a1a","#f5b82e","#222228","#a0522d"][i],c:col}, x, 42); R(c,col,x,54,12,4); R(c,"#ff4d5e",x+5,47,2,1); }); }},
-  incense:{draw(c){ R(c,"#6b4a2e",18,52,8,6); R(c,"#c8a46a",19,53,6,1); R(c,"#8a3a3a",21,44,1,8); R(c,"#ff4d5e",21,43,1,1); [[20,40],[22,36],[20,32],[23,28]].forEach(([x,y])=>R(c,"#c9c9d4",x,y,2,2)); }},
-  shutter:{back:true, draw(c){ R(c,"#9a9eaa",0,0,128,58); for(let y=0;y<58;y+=3) R(c,"#7a7e8a",0,y,128,1); R(c,"#55555f",0,0,128,4); R(c,"#ff4d5e",90,20,30,10); R(c,"#ffffff",93,23,24,1); R(c,"#ffffff",93,26,18,1); }},
+  crowd4:{draw(c){ [[27,"#d33a4a"],[38,"#45d0ff"],[79,"#4fdc7a"],[89,"#c86bff"]].forEach(([x,col],i)=>{ draw(c, HEAD, {k:K,s:"#f2c6a0",h:["#3a2a1a","#f5b82e","#222228","#a0522d"][i],c:col}, x, 42); R(c,col,x,54,12,4); R(c,"#ff4d5e",x+5,47,2,1); }); }},
+  incense:{draw(c){ R(c,"#6b4a2e",81,53,8,5); R(c,"#c8a46a",82,54,6,1); R(c,"#8a3a3a",84,45,1,8); R(c,"#ff4d5e",84,44,1,1); [[83,40],[85,36],[83,32],[86,28]].forEach(([x,y],i)=>glow(c,"#c9c9d4",.9-i*.18,x,y,2,2));
+    R(c,"#a8802a",39,55,9,3); R(c,"#f5b82e",39,54,9,1); R(c,"#6b4a2e",44,51,1,3); R(c,"#6b4a2e",45,50,1,1); }},
+  shutter:{back:true, scene:true, draw(c){ R(c,"#9a9eaa",0,0,128,58); for(let y=0;y<58;y+=3) R(c,"#7a7e8a",0,y,128,1); R(c,"#55555f",0,0,128,4); R(c,"#ff4d5e",90,20,30,10); R(c,"#ffffff",93,23,24,1); R(c,"#ffffff",93,26,18,1); }},
   boba:{draw(c){ R(c,K,74,42,8,15); R(c,"#e8ecf4",75,43,6,13); R(c,"#c8a46a",75,46,6,10); [[75,53],[78,54],[76,51],[79,50]].forEach(([x,y])=>R(c,K,x,y,2,2)); R(c,"#ff6fae",79,36,1,8); }},
   mask:{draw(c){ R(c,"#3a3f5a",55,33,18,18); R(c,"#262a40",55,33,18,2); R(c,"#f2c6a0",58,40,12,3); R(c,K,61,41,2,1); R(c,K,66,41,2,1); }},
   inspector:{draw(c){ draw(c, LAW, INSP_PAL, 84, 36); R(c,"#1f3a7a",86,34,16,3); R(c,"#ffffff",104,46,6,8); R(c,"#45d0ff",105,47,4,1); R(c,"#45d0ff",105,49,4,1); }},
   bottle:{draw(c){ R(c,K,74,38,7,19); R(c,"#4fdc7a",75,42,5,14); R(c,"#bfe6ff",76,39,3,3); R(c,"#ffffff",75,47,5,4); R(c,"#45d0ff",76,48,3,2); }},
-  fridge:{back:true, draw(c){ R(c,K,86,8,36,50); R(c,"#e8ecf4",87,9,34,48); R(c,"#bfe6ff",89,11,30,44);
-    for(let s=0;s<4;s++){ R(c,"#c9c9d4",89,21+s*11,30,1); for(let i=0;i<7;i++) R(c, s===2&&i===3?"#4fdc7a":(i%2?"#45d0ff":"#ff4d5e"), 90+i*4, 14+s*11, 3, 7); } }},
+  fridge:{back:true, draw(c){ R(c,K,78,8,36,50); R(c,"#e8ecf4",79,9,34,48); R(c,"#bfe6ff",81,11,30,44);
+    for(let s=0;s<4;s++){ R(c,"#c9c9d4",81,21+s*11,30,1); for(let i=0;i<7;i++) R(c, s===2&&i===3?"#4fdc7a":(i%2?"#45d0ff":"#ff4d5e"), 82+i*4, 14+s*11, 3, 7); } }},
   boss:{draw(c){ draw(c, LAW, BOSS_PAL, 84, 36); R(c,"#4fdc7a",104,48,3,9); R(c,"#ffffff",104,51,3,2); }},
-  replay:{back:true, draw(c){ R(c,K,84,8,40,28); R(c,"#2b2244",85,9,38,26); R(c,"#ff4d5e",88,12,3,3); R(c,"#ffffff",92,13,8,1);
-    draw(c, HEAD, {k:K,s:"#f2c6a0",h:"#1f2e55",c:"#3a3f5a"}, 98, 18); R(c,"#ffffff",88,31,32,1); R(c,"#ff4d5e",88,31,12,1); }},
+  replay:{back:true, draw(c){ R(c,K,84,8,30,24); R(c,"#2b2244",85,9,28,22); R(c,"#ff4d5e",87,11,3,3); R(c,"#ffffff",91,12,8,1);
+    draw(c, HEAD, {k:K,s:"#f2c6a0",h:"#1f2e55",c:"#3a3f5a"}, 91, 15); R(c,"#ffffff",87,28,24,1); R(c,"#ff4d5e",87,28,9,1); }},
   gamepad:{draw(c){ R(c,K,56,50,18,7); R(c,"#3a3f5a",57,51,16,5); R(c,"#ff4d5e",69,52,2,1); R(c,"#45d0ff",67,53,2,1); R(c,"#c9c9d4",59,52,3,1); R(c,"#c9c9d4",60,51,1,3); }},
   cards:{back:true, draw(c){ [["#ff6fae",6,8],["#f5b82e",18,14],["#45d0ff",8,24],["#4fdc7a",22,30],["#ffffff",90,8],["#c86bff",104,12],["#ff8a1f",94,24],["#ffffff",110,28],["#ff6fae",36,6],["#45d0ff",82,40]].forEach(([col,x,y])=>{ R(c,K,x,y,10,8); R(c,col,x+1,y+1,8,6); R(c,"#d33a4a",x+4,y+3,2,2); }); }},
-  cat:{draw(c){ const o="#ff8a1f"; R(c,o,12,49,14,9); R(c,o,14,44,9,6); R(c,o,14,42,2,2); R(c,o,21,42,2,2); R(c,K,16,46,1,1); R(c,K,20,46,1,1); R(c,"#ff6fae",18,48,1,1); R(c,"#c86a10",12,52,14,1); R(c,o,26,50,3,2); }},
-  lottery:{draw(c){ R(c,K,88,40,26,18); R(c,"#d33a4a",89,41,24,16); R(c,"#f5b82e",95,41,12,2); R(c,"#ffffff",97,47,8,6); R(c,K,100,48,2,1); R(c,K,101,49,1,2); R(c,K,100,52,1,1);
-    [[84,34,"#f5b82e"],[118,36,"#45d0ff"],[116,30,"#4fdc7a"]].forEach(([x,y,col])=>R(c,col,x,y,3,3)); }},
+  cat:{draw(c){ const o="#ff8a1f"; R(c,o,30,49,14,9); R(c,o,32,44,9,6); R(c,o,32,42,2,2); R(c,o,39,42,2,2); R(c,K,34,46,1,1); R(c,K,38,46,1,1); R(c,"#ff6fae",36,48,1,1); R(c,"#c86a10",30,52,14,1); R(c,o,44,50,3,2); }},
+  cat_hold:{draw(c){ draw(c, mirror([".o.....",".oo....",".oooooo","ooooooo","oookooo","ooooooo","oooowwp","dooowww","ooooooo","sdooooo","ssooooo","sdooooo","ooooooo"]), {o:"#ff8a1f",d:"#c86a10",k:K,w:"#fff6d0",p:"#ff6fae",s:"#f2c6a0"}, 57, 45); }},
+  lottery:{draw(c){ R(c,K,78,40,26,18); R(c,"#d33a4a",79,41,24,16); R(c,"#f5b82e",85,41,12,2); R(c,"#ffffff",87,47,8,6); R(c,K,90,48,2,1); R(c,K,91,49,1,2); R(c,K,90,52,1,1);
+    [[75,33,"#f5b82e"],[97,34,"#45d0ff"],[92,29,"#4fdc7a"]].forEach(([x,y,col])=>R(c,col,x,y,3,3)); }},
   vc:{draw(c){ R(c,K,88,48,14,10); R(c,"#3a3a55",89,49,12,8); R(c,"#4fdc7a",91,51,3,3); R(c,"#ff4d5e",96,51,3,3); R(c,"#45d0ff",90,55,10,1); }},
-  sign:{draw(c){ R(c,"#6b4a2e",104,48,2,10); R(c,K,84,30,40,20); R(c,"#ffffff",85,31,38,18); [[88,35,30],[88,39,24],[88,43,28]].forEach(([x,y,w])=>R(c,"#d33a4a",x,y,w,2)); }},
-  video_call:{draw(c){ R(c,K,86,28,36,24); R(c,"#26403a",87,29,34,20); draw(c, HEAD, {k:K,s:"#f2c6a0",h:"#f5b82e",c:"#45d0ff"}, 98, 33); R(c,"#ff4d5e",116,31,3,3); R(c,"#55555f",100,52,10,2); R(c,"#55555f",96,54,18,4); }},
-  papers:{draw(c){ for(let i=0;i<6;i++){ R(c,"#ffffff",4+(i%2),56-i*3,26,3); R(c,"#c9c9d4",6,57-i*3,20,1); } for(let i=0;i<5;i++){ R(c,"#ffffff",92-(i%2),56-i*3,28,3); R(c,"#c9c9d4",94,57-i*3,22,1); } R(c,"#f5b82e",10,38,14,2); }},
-  cert:{draw(c){ R(c,K,78,38,22,16); R(c,"#fff6d0",79,39,20,14); R(c,"#c8a46a",81,41,16,1); R(c,"#8f9bd0",81,44,14,1); R(c,"#8f9bd0",81,46,10,1); R(c,"#f5b82e",91,47,5,5); R(c,"#ff4d5e",92,48,3,3); }},
-  poster_h:{back:true, draw(c){ R(c,K,84,4,40,34); R(c,"#a51c30",85,5,38,32); R(c,"#ffffff",96,10,16,14); R(c,"#ffffff",98,24,12,3); R(c,"#ffffff",101,27,6,2); R(c,"#a51c30",99,13,10,1); R(c,"#a51c30",99,16,10,1); R(c,"#a51c30",99,19,10,1); }},
+  sign:{draw(c){ R(c,K,45,49,38,10); R(c,"#ffffff",46,50,36,8); for(let x=0;x<30;x++){ R(c,"#d33a4a",49+x,52+((x>>2)%2),1,1); if(x<20) R(c,"#d33a4a",49+x,55+(((x>>2)+1)%2),1,1); } R(c,"#f2c6a0",43,50,3,3); R(c,"#f2c6a0",82,50,3,3); }},
+  video_call:{draw(c){ R(c,K,78,28,36,24); R(c,"#26403a",79,29,34,20); draw(c, HEAD, {k:K,s:"#f2c6a0",h:"#f5b82e",c:"#45d0ff"}, 90, 33); R(c,"#ff4d5e",108,31,3,3); R(c,"#55555f",92,52,10,2); R(c,"#55555f",88,54,18,4); }},
+  papers:{draw(c){ for(let i=0;i<6;i++){ R(c,"#ffffff",24+(i%2),56-i*3,24,3); R(c,"#c9c9d4",26,57-i*3,19,1); } for(let i=0;i<5;i++){ R(c,"#ffffff",79-(i%2),56-i*3,22,3); R(c,"#c9c9d4",81,57-i*3,17,1); } R(c,"#f5b82e",29,38,14,2); }},
+  cert:{draw(c){ R(c,K,53,43,22,16); R(c,"#fff6d0",54,44,20,14); R(c,"#c8a46a",56,46,16,1); R(c,"#8f9bd0",56,49,14,1); R(c,"#8f9bd0",56,51,10,1); R(c,"#f5b82e",66,52,5,5); R(c,"#ff4d5e",67,53,3,3); R(c,"#f2c6a0",51,47,3,3); R(c,"#f2c6a0",74,47,3,3); }},
+  poster_h:{back:true, scene:true, draw(c){ // 虛擬背景換成名校校園照片：藍天、紅磚樓、白柱、鐘樓、草地
+    R(c,"#9fd3ff",0,0,128,58); R(c,"#ffffff",10,6,14,3); R(c,"#ffffff",13,4,8,2); R(c,"#ffffff",100,9,16,3); R(c,"#ffffff",104,7,8,2);
+    R(c,"#a5442f",12,24,104,26); for(let y=27;y<50;y+=3) R(c,"#8a3424",12,y,104,1);
+    for(let i=0;i<5;i++){ [17,87].forEach(x0=>{ R(c,"#2c3557",x0+i*6,30,3,5); R(c,"#2c3557",x0+i*6,40,3,5); }); }
+    for(let i=0;i<8;i++){ const w=2+i*5; R(c,"#f4f0e6",64-(w>>1),18+i,w,1); } R(c,"#f4f0e6",44,26,40,2); for(let i=0;i<6;i++) R(c,"#f4f0e6",45+i*7,28,3,20);
+    R(c,"#a5442f",58,6,12,12); R(c,"#5a2a20",57,4,14,2); R(c,"#5a2a20",63,1,2,3); R(c,"#f4f0e6",61,8,6,6); R(c,K,63,9,1,3); R(c,K,64,11,2,1);
+    R(c,"#d8d4c8",40,48,48,2); R(c,"#4fa04f",0,50,128,8); R(c,"#3f8a3f",0,50,128,1); }},
   gradcap:{draw(c){ R(c,K,52,27,24,3); R(c,"#222228",56,30,16,3); R(c,"#f5b82e",74,28,1,6); R(c,"#f5b82e",73,34,3,2); R(c,"#222228",51,52,26,6); R(c,"#a51c30",61,52,6,6); }},
   lawyer:{draw(c){ draw(c, LAW, LAW_PAL, 82, 36); }},
-  shopfront:{back:true, draw(c){ R(c,"#eef0e6",0,0,128,58); for(let x=0;x<128;x+=8){ R(c,"#d33a4a",x,4,4,10); R(c,"#ffffff",x+4,4,4,10); } R(c,K,0,14,128,1);
+  shopfront:{back:true, scene:true, draw(c){ R(c,"#eef0e6",0,0,128,58); for(let x=0;x<128;x+=8){ R(c,"#d33a4a",x,4,4,10); R(c,"#ffffff",x+4,4,4,10); } R(c,K,0,14,128,1);
     R(c,"#6b4a2e",4,20,36,38); R(c,"#bfe6ff",8,24,28,20); R(c,"#6b4a2e",88,20,34,38); R(c,"#3e2a1a",92,24,26,34); R(c,"#f5b82e",114,40,2,2); }},
   bowl:{draw(c){ R(c,K,55,50,20,8); R(c,"#ffffff",56,50,18,6); R(c,"#d33a4a",56,53,18,1); R(c,"#f5b82e",58,48,14,3); R(c,"#ff8a1f",62,47,4,2); [[60,42],[66,40],[70,43]].forEach(([x,y])=>R(c,"#ffffff",x,y,2,2)); R(c,"#c8a46a",72,40,1,10); R(c,"#c8a46a",74,40,1,10); }},
   mustache:{draw(c){ R(c,"#3a2a1a",58,45,12,2); R(c,"#3a2a1a",57,46,2,2); R(c,"#3a2a1a",69,46,2,2); R(c,"#ffffff",53,52,22,6); R(c,"#ff8a1f",58,53,12,2); }},
-  phones:{draw(c){ for(let r=0;r<2;r++) for(let i=0;i<6;i++){ R(c,K,2+i*7,48+r*5,5,4); R(c,"#45d0ff",3+i*7,49+r*5,3,2); R(c,K,84+i*7,48+r*5,5,4); R(c,"#f5b82e",85+i*7,49+r*5,3,2); } }},
-  dog:{draw(c){ R(c,K,84,32,24,22); R(c,"#fff6d0",85,33,22,20); const b="#a0522d"; R(c,b,89,37,14,13); R(c,"#6b3a1a",87,37,3,8); R(c,"#6b3a1a",102,37,3,8); R(c,K,92,41,2,2); R(c,K,98,41,2,2); R(c,K,95,45,3,2); R(c,"#ff6fae",96,48,2,2); }},
+  phones:{draw(c){ for(let r=0;r<3;r++) for(let i=0;i<4;i++){ const y=44+r*5; R(c,K,22+i*7,y,5,4); R(c,"#45d0ff",23+i*7,y+1,3,2); R(c,K,79+i*7,y,5,4); R(c,"#f5b82e",80+i*7,y+1,3,2); } }},
+  dog:{draw(c){ R(c,K,54,43,21,15); R(c,"#fff6d0",55,44,19,13); const b="#a0522d"; R(c,b,59,45,11,10); R(c,"#6b3a1a",57,45,2,6); R(c,"#6b3a1a",70,45,2,6); R(c,K,61,48,2,2); R(c,K,66,48,2,2); R(c,K,63,51,3,2); R(c,"#ff6fae",64,53,1,2); R(c,"#f2c6a0",52,48,3,4); R(c,"#f2c6a0",74,48,3,4); }},
   phone_bank:{draw(c){ R(c,K,76,38,10,17); R(c,"#26403a",77,40,8,12); R(c,"#4fdc7a",78,43,6,6); R(c,"#ffffff",79,46,1,1); R(c,"#ffffff",80,47,1,1); R(c,"#ffffff",81,46,1,1); R(c,"#ffffff",82,45,1,1); }},
-  receipt:{back:true, draw(c){ R(c,K,90,4,30,44); R(c,"#ffffff",91,5,28,42); [[94,9,20],[94,14,14],[94,18,18],[94,22,12],[94,26,20],[94,30,10]].forEach(([x,y,w])=>R(c,"#55555f",x,y,w,1));
-    R(c,"#d33a4a",104,34,10,9); R(c,"#ffffff",106,36,6,5); R(c,"#d33a4a",107,37,4,3); for(let x=0;x<28;x+=4) R(c,"#cfd3c4",91+x,46,2,1); }}
+  receipt:{back:true, draw(c){ R(c,K,78,4,30,44); R(c,"#ffffff",79,5,28,42); [[82,9,20],[82,14,14],[82,18,18],[82,22,12],[82,26,20],[82,30,10]].forEach(([x,y,w])=>R(c,"#55555f",x,y,w,1));
+    R(c,"#d33a4a",92,34,10,9); R(c,"#ffffff",94,36,6,5); R(c,"#d33a4a",95,37,4,3); for(let x=0;x<28;x+=4) R(c,"#cfd3c4",79+x,46,2,1); }}
 };
+/* 關燈影片形式：補光燈與 RGB 全關，只剩桌上一盞小檯燈從右下照亮主角；遠處接近灰階、偏冷 */
+function nightLight(c){
+  const W=128, H=72, lx=86, ly=49;
+  R(c,"#3a3a44",83,56,7,1); R(c,"#55555f",86,50,1,6);
+  [[85,45,3],[84,46,5],[83,47,7],[83,48,7]].forEach(([x,y,w])=>R(c,"#f5b82e",x,y,w,1));
+  const img=c.getImageData(0,0,W,H), d=img.data;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const i=(y*W+x)*4, r=d[i], g=d[i+1], b=d[i+2], l=r*.3+g*.59+b*.11;
+    const f=Math.max(0,1-Math.hypot(x-lx,(y-ly)*1.15)/46)**1.6, s=.3+f*.7, k=.16+f*1.05;
+    d[i]=Math.min(255,(l+(r-l)*s)*k*1.06); d[i+1]=Math.min(255,(l+(g-l)*s)*k*.94); d[i+2]=Math.min(255,(l+(b-l)*s)*(.24+f*.7));
+  }
+  c.putImageData(img,0,0);
+  R(c,"#fff6d0",84,49,5,1);
+}
 function renderVideo(expr){
   const c=vctx(), W=128, H=72, f=curForm(), v=(f&&f.vis)||{}, mode=v.mode||"normal";
   $("screen").classList.toggle("blackmode", mode==="black");
@@ -1454,10 +1476,11 @@ function renderVideo(expr){
   (ROOMS[G.char]||ROOMS.CHAR_IVY)(c);
   const props=(v.props||[]).map(p=>PROPS[p]).filter(Boolean);
   props.filter(p=>p.back).forEach(p=>p.draw(c));
+  if(!props.some(p=>p.scene)) LAMPS[ROOM_LAMP[G.char]||"ring"](c, mode==="dim");
   drawChar(c, G.char, 50, 31, expr || v.expr || "cry", v.fx || (v.expr==="bow" ? "pale" : ""));
   R(c,"#1b1530",34,50,5,7); R(c,"#666",35,51,3,5);
   props.filter(p=>!p.back).forEach(p=>p.draw(c));
-  if(mode==="dim"){ c.fillStyle="rgba(4,6,20,.62)"; c.fillRect(0,0,W,H); c.fillStyle="rgba(255,240,200,.18)"; c.fillRect(54,30,20,28); }
+  if(mode==="dim") nightLight(c);
   if(mode==="glitch"){
     const img=c.getImageData(0,0,W,H), d=new Uint8ClampedArray(img.data);
     for(let y=0;y<H;y++){ const sh = (y*7)%11===0 ? 3 : (y*5)%13===0 ? -2 : 0; if(!sh) continue;

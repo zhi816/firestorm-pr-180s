@@ -1,6 +1,11 @@
 # 將遊戲本體 index.html 發布至 GitHub Pages（見 docs/todo.md TD-009）。
 # 只上傳 index.html；docs/、.agents/、AGENTS.md、樣張與日後的 worker/ 皆不上站。
 # 倉庫 Settings -> Pages 之 Source 須設為「GitHub Actions」。
+#
+# 打包（build）與發布（deploy）拆為兩個工作：在同一工作內，剛上傳的成品有時尚未
+# 登錄完成，deploy-pages 便回報「No artifacts named "github-pages" were found」而失敗
+# （2026-11-25 三次，成品實際已上傳）。拆開後發布工作要等打包工作結束才啟動，
+# 且發布失敗時會等待 30 秒再重試一次。
 name: Deploy index.html to GitHub Pages
 
 on:
@@ -22,11 +27,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -45,6 +47,23 @@ jobs:
         with:
           path: _site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+
+      - name: Wait before retry
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 30
+
+      - name: Retry deploy to GitHub Pages
+        id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v5

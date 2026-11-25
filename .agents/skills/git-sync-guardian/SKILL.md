@@ -17,7 +17,7 @@ description: >-
 1. **提交必含推送（Commit Implies Push）**：完成工作或提交變更時，必須立即推送到遠端（`main` 或當前功能分支），不得留滯未推送的本機 commit。
 2. **動工前必先檢查遠端（Pre-flight Fetch Check）**：實質修改前執行 `status.py`；若落後遠端，執行 `sync.py` 安全合流。
 3. **日誌並行合流（Log Append-Only Concurrency）**：`docs/log.md` 只在結尾追加，遇衝突時由 `merge_log.py` 按時間保留雙方條目。
-4. **只提交自己的修改（Commit Only Your Own Changes）**：嚴禁 `git add -A`、`git add .`、`git commit -a`。共用檔 `docs/log.md`、`docs/issues.md`、`docs/todo.md` 一律經由 `safe_commit_push.py` 逐條暫存。
+4. **只提交自己的修改（Commit Only Your Own Changes）**：嚴禁 `git add -A`、`git add .`、`git commit -a`。共用檔 `docs/log.md`、`docs/issues.md`、`docs/todo.md` 一律經由 `safe_commit_push.py` 逐條暫存。提交 `docs/log.md` 時**一律加 `--log-heading` 指定自己剛寫的標題**：同名代理（例如多個 Claude Code 對話）同時工作時，只靠 `--agent` 分不出誰寫的，會把別人的條目一起提交（2026-11-25 實際發生）。
 5. **寫入日誌即提交（Log Implies Commit）**：追加 `docs/log.md` 代表工作已完成，須於同一回合執行 `safe_commit_push.py` 推送；未完成之進度改記於 `docs/todo.md`（若僅新增或更新待辦而無其他已完成產出，可直接提交 `docs/todo.md` 而不另寫日誌）。
 6. **撤回工作不刪紀錄（Undo Without Erasing Records）**：不得以 `git revert`、`git reset` 回退整份共用檔；只撤回程式碼或規格內容並另補日誌說明。
 
@@ -46,8 +46,8 @@ python3 .agents/skills/git-sync-guardian/scripts/stage_todo.py --next-id
 python3 .agents/skills/git-sync-guardian/scripts/stage_issues.py --next-id
 
 # 6. 原子提交並推送（明確列出檔案，共用檔搭配旗標）
-python3 .agents/skills/git-sync-guardian/scripts/safe_commit_push.py "<commit_message>" --agent "<代理名稱>" --todo TD-003 -- docs/todo.md docs/log.md index.html
-python3 .agents/skills/git-sync-guardian/scripts/safe_commit_push.py "fix(spec): resolve FP-001" --agent "<代理名稱>" --issue FP-001 --todo TD-002 -- docs/dev/實作規格書.md docs/issues.md docs/todo.md docs/log.md
+python3 .agents/skills/git-sync-guardian/scripts/safe_commit_push.py "<commit_message>" --agent "<代理名稱>" --log-heading "## [YYYY-MM-DD HH:MM] feat | <標題> | <模組標籤>" --todo TD-003 -- docs/todo.md docs/log.md index.html
+python3 .agents/skills/git-sync-guardian/scripts/safe_commit_push.py "fix(spec): resolve FP-001" --agent "<代理名稱>" --log-heading "## [YYYY-MM-DD HH:MM] fix | <標題> | <模組標籤>" --issue FP-001 --todo TD-002 -- docs/dev/實作規格書.md docs/issues.md docs/todo.md docs/log.md
 ```
 
 ### 旗標說明
@@ -55,5 +55,5 @@ python3 .agents/skills/git-sync-guardian/scripts/safe_commit_push.py "fix(spec):
 - `--branch`：可選，限定必須在指定分支執行（支援 `main` 與手機/雲端代理開出的 `claude/...` 等具名分支；禁止 detached HEAD）。
 - `--issue FP-NNN`：提交 `docs/issues.md` 時必填（可重複）；歸檔搬移時用 `--issue ARCHIVED`。
 - `--todo TD-NNN`：提交 `docs/todo.md` 時必填（可重複），包含完成後刪除的條目。
-- `--log-heading`：同代理多工作階段同時寫日誌時，精確指定自己的標題。
+- `--log-heading`：列出 `docs/log.md` 時必加（可重複），填自己剛寫的日誌標題整行（含開頭 `## `，須與檔內完全相同），只提交這幾筆，他人條目留在工作目錄。
 - `--allow-stale-log`：僅在推送失敗重試等情況下放行超過 60 分鐘的舊日誌時間戳記。

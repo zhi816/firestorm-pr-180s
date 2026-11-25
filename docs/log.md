@@ -227,3 +227,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：使用者改定預設音樂要開啟。`index.html` 未存過設定的玩家，電腦與手機皆預設開啟背景音樂與音效（瀏覽器限制下於首次點擊時開始播放），已手動切換過的玩家維持其選擇。同步更新 DESIGN.md 第四章第 3 項、美術設計規格書第十一章預設狀態與 `TD-007` 進度描述，取代原「手機版預設靜音」決定。
+
+## [2026-11-25 15:42] rule | 提交日誌一律加 --log-heading 指定自己的標題 | 全域
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：依使用者同意新增規則。起因：提交 79de79a 時，`safe_commit_push.py` 只以 `--agent "Claude Code"` 挑日誌條目，把另一個同名 Claude Code 對話剛寫的 Pages 日誌一起提交。`AGENTS.md` 第七章第 3 項、`CLAUDE.md` 每日鐵律與 git-sync-guardian 之 SKILL.md（核心鐵律、指令範例、旗標說明）改為：提交 `docs/log.md` 時一律加 `--log-heading` 填自己剛寫的標題整行，只提交這幾筆。腳本本身未改（該參數原已存在）。

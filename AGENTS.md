@@ -167,7 +167,7 @@ python3 .agents/skills/project-audit/scripts/lint_project.py
 
 1. **提交必含推送（Commit Implies Push）**：任何完成階段任務的 `commit` 必須立即 `push` 至遠端（`main` 或雲端代理開立之 `claude/...` 等具名分支），確認 `Ahead: 0`。
 2. **動工前必先檢查遠端（Pre-flight Fetch Check）**：開始實質改檔前執行 `python3 .agents/skills/git-sync-guardian/scripts/status.py`，落後時以 `sync.py` 合流。
-3. **只提交自己的修改（Commit Only Your Own Changes）**：嚴禁 `git add -A`、`git add .`、`git commit -a`。一律使用 `safe_commit_push.py` 明確列出自己改動的檔案；共用檔 `docs/log.md`、`docs/issues.md`、`docs/todo.md` 由對應 `stage_*.py` 逐條暫存。
+3. **只提交自己的修改（Commit Only Your Own Changes）**：嚴禁 `git add -A`、`git add .`、`git commit -a`。一律使用 `safe_commit_push.py` 明確列出自己改動的檔案；共用檔 `docs/log.md`、`docs/issues.md`、`docs/todo.md` 由對應 `stage_*.py` 逐條暫存。提交日誌時一律加 `--log-heading "<自己剛寫的標題整行>"`：多個同名代理（例如數個 Claude Code 對話）同時工作時，只靠 `--agent` 會把別人的日誌條目一起提交（2026-11-25 使用者決定）。
 4. **寫入日誌即提交（Log Implies Commit）**：追加 `docs/log.md` 代表工作完成，須在同一回合內執行 `safe_commit_push.py` 提交並推送（使用者明確要求暫緩時除外）。寫日誌一律追加於檔尾，不得讀入整檔後覆寫，以免蓋掉他人新條目。
 5. **日誌並行合流原則**：遇 `docs/log.md` 合併衝突時，由 `merge_log.py` 按時間先後保留所有條目，嚴禁刪除或覆蓋他方紀錄。
 6. **撤回工作不刪紀錄**：要撤回某次程式或文件改動時，不得以 `git revert`、`git reset` 回退整份共用檔；只撤回程式碼或規格內容，`docs/log.md`、`docs/issues.md`、`docs/todo.md` 紀錄全數保留，並另追加日誌說明撤回原因。

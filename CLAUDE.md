@@ -17,4 +17,4 @@ Claude Code（含桌面、終端機與手機／網頁版）在開始任何實質
    - **動工前先同步**：執行 `python3 .agents/skills/git-sync-guardian/scripts/status.py`（必要時 `sync.py`）。
    - **不整份讀 `docs/log.md`**：查近期紀錄一律跑 `python3 .agents/skills/git-sync-guardian/scripts/log_tail.py -n 3`。
    - **Zero-Emoji**：所有文件與新程式碼嚴禁使用 Emoji，一律繁體中文。
-   - **提交必含推送，只提交自己的修改**：寫入 `docs/log.md`（先跑 `log_time.py` 取得臺北時間）後，使用 `safe_commit_push.py` 搭配 `--agent`、`--todo`、`--issue` 提交並立即推送。
+   - **提交必含推送，只提交自己的修改**：寫入 `docs/log.md`（先跑 `log_time.py` 取得臺北時間）後，使用 `safe_commit_push.py` 搭配 `--agent`、`--log-heading`（填自己剛寫的日誌標題整行）、`--todo`、`--issue` 提交並立即推送。

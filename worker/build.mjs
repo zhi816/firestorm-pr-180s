@@ -1,7 +1,8 @@
 // 從根目錄 index.html 抽出 Worker 組裝 Prompt 所需的資料，寫成 src/prompt-data.js。
 //
-// 遊戲資料（角色、事件、策略）、SYSTEM_PROMPT 與 userPrompt() 只在 index.html 維護一份，
-// 本腳本把它們原樣搬進 Worker，避免兩邊說法不一致（見 docs/dev/實作規格書.md 第七章）。
+// 遊戲資料（角色、事件、策略）與兩位 AI 的 Prompt（index.html 中「PROMPT 區塊」：CROWD_PROMPT、JUDGE_PROMPT、
+// crowdPrompt()、judgePrompt()）只在 index.html 維護一份，本腳本把它們原樣搬進 Worker，
+// 避免兩邊說法不一致（見 docs/dev/實作規格書.md 第四、七章）。
 //
 // 用法（於倉庫根目錄或 worker/ 內皆可）：
 //   node worker/build.mjs          重新產生 src/prompt-data.js
@@ -32,12 +33,13 @@ const dataChunk = between(html, "/* ==================== 遊戲資料", "/* ====
 const ctx = vm.createContext({});
 const data = vm.runInContext(dataChunk + "\n;({ CHARACTERS, CRISIS_EVENTS })", ctx);
 
-// 2. SYSTEM_PROMPT（樣板字串內不含插值，直接求值）
-const sysChunk = between(html, "const SYSTEM_PROMPT = `", "`;\n", "SYSTEM_PROMPT") + "`;";
-const SYSTEM_PROMPT = vm.runInContext(sysChunk + "\nSYSTEM_PROMPT", vm.createContext({}));
-
-// 3. userPrompt() 原始碼：原樣複製進 Worker 模組（Worker 不允許 eval，故以原始碼形式輸出）
-const userPromptSrc = between(html, "function userPrompt(c){", "async function callLLMJudge", "userPrompt()").trimEnd();
+// 2. PROMPT 區塊：原樣複製進 Worker 模組（Worker 不允許 eval，故以原始碼形式輸出）
+const START = "/* ==== PROMPT 區塊開始", END = "/* ==== PROMPT 區塊結束 ==== */";
+const blockStart = html.indexOf(START);
+const blockEnd = html.indexOf(END);
+if (blockStart < 0 || blockEnd < blockStart) throw new Error("index.html 找不到 PROMPT 區塊標記");
+const promptBlock = html.slice(html.indexOf("\n", blockStart) + 1, blockEnd).trimEnd();
+const EXPORTS = ["CROWD_NAMES", "CROWD_PROMPT", "JUDGE_PROMPT", "crowdPrompt", "judgePrompt"];
 
 // 只保留組 Prompt 與驗證輸入需要的欄位，其餘（數值、關鍵字、離線留言、畫面效果）不帶進 Worker
 const characters = {};
@@ -57,19 +59,36 @@ for (const ev of data.CRISIS_EVENTS) {
   };
 }
 
-const out = `// 本檔由 worker/build.mjs 從根目錄 index.html 自動產生，請勿手動修改。
-// 改了 index.html 的角色、事件、策略、SYSTEM_PROMPT 或 userPrompt() 後，執行 node worker/build.mjs 重新產生。
-
-export const SYSTEM_PROMPT = ${JSON.stringify(SYSTEM_PROMPT)};
-
-export const CHARACTERS = ${JSON.stringify(characters, null, 2)};
+const header = `// 本檔由 worker/build.mjs 從根目錄 index.html 自動產生，請勿手動修改。
+// 改了 index.html 的角色、事件、策略或 PROMPT 區塊（兩位 AI 的 Prompt）後，執行 node worker/build.mjs 重新產生。
+`;
+const dataSrc = `export const CHARACTERS = ${JSON.stringify(characters, null, 2)};
 
 export const EVENTS = ${JSON.stringify(events, null, 2)};
 
 const tacticsOf = ev => [...ev.forms, ...ev.talks];
 export const findTactic = (ev, id) => tacticsOf(ev).find(t => t.id === id);
+`;
 
-export ${userPromptSrc}
+// 先在沙盒裡實際跑一次兩支 Prompt 函式，確認區塊沒有引用 Worker 不存在的變數
+{
+  const sandbox = vm.createContext({});
+  const probe = dataSrc.replace(/^export /gm, "") + "\n" + promptBlock + "\n;(() => {" +
+    "const ev = Object.values(EVENTS)[0];" +
+    "const c = { char: ev.characters.find(x => CHARACTERS[x]) || Object.keys(CHARACTERS)[0], event: ev, tactics: [ev.forms[0].id, ev.talks[0].id], text: '測試聲明', prevFlaws: ['上次的敗筆'] };" +
+    "return [typeof CROWD_PROMPT, typeof JUDGE_PROMPT, crowdPrompt(c), judgePrompt(c, ['a','b','c','d','e','f']), judgePrompt(c, null)];" +
+    "})()";
+  const r = vm.runInContext(probe, sandbox);
+  if (r[0] !== "string" || r[1] !== "string" || !r[2].includes("測試聲明") || !r[3].includes("顯微鏡柯南：a") || !r[4].includes("網友留言暫時載入失敗")) {
+    throw new Error("PROMPT 區塊試跑結果不符預期");
+  }
+}
+
+const out = `${header}
+${dataSrc}
+${promptBlock}
+
+export { ${EXPORTS.join(", ")} };
 `;
 
 const check = process.argv.includes("--check");

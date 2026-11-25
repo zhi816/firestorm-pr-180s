@@ -6,6 +6,13 @@
 <title>炎上大作戰：危機公關 180 秒</title>
 <meta name="description" content="像素 RPG 危機公關模擬遊戲：180 秒寫出道歉聲明，接受網友公審與 AI 裁判判決。">
 <meta name="theme-color" content="#0c1230">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="炎上大作戰">
+<link rel="manifest" id="appManifest">
+<link rel="apple-touch-icon" id="appIcon">
+<link rel="icon" id="favIcon">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap">
@@ -219,6 +226,11 @@ body:is([data-view="title"],[data-view="select"],[data-view="help"]) #timer{visi
 #titlePn{gap:20px;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:start}
 .title-main h2{margin:0 0 12px;font-size:36px;font-weight:400;line-height:1.25;color:var(--gold);text-shadow:4px 4px 0 var(--line)}
 .title-main p{font-family:var(--long);font-size:15px;line-height:1.8;margin:0 0 16px}
+.a2hs{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;margin:0 0 16px;padding:10px 12px;
+  background:var(--lo);box-shadow:inset 0 0 0 2px var(--cyan);font-family:var(--long);font-size:14px;line-height:1.6}
+.a2hs[hidden]{display:none}
+.a2hs b{color:var(--cyan);font-weight:400;font-family:var(--px)}
+.a2hs .mini{font-family:var(--px)}
 .steps{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:8px}
 .steps li{display:grid;grid-template-columns:28px 1fr;gap:8px;font-family:var(--long);font-size:14px;line-height:1.6}
 .steps li b{font-family:var(--px);font-weight:400;color:var(--line);background:var(--gold);text-align:center;height:22px}
@@ -295,7 +307,10 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
 #hud,#tabs,.chat,.chat-all,#feedClose{display:none}
 @media (max-width:760px){
   body{padding-block:calc(72px + env(safe-area-inset-top,0px)) calc(84px + env(safe-area-inset-bottom,0px));background-size:8px 8px}
-  body:is([data-view="title"],[data-view="select"]){padding-block:16px 32px}
+  body:is([data-view="title"],[data-view="select"]){padding-block:max(16px,env(safe-area-inset-top,0px)) calc(32px + env(safe-area-inset-bottom,0px))}
+  html,body{overscroll-behavior-y:none}
+  body{-webkit-tap-highlight-color:transparent}
+  button,.char,.cmd{touch-action:manipulation}
   body:is([data-view="title"],[data-view="select"]) #hud,body:is([data-view="title"],[data-view="select"]) #tabs{display:none !important}
   body:not([data-view="title"]):not([data-view="select"]) header{display:none}
   .logo h1{font-size:30px}
@@ -409,6 +424,8 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   <!-- 封面 -->
   <section class="pn" id="titlePn">
     <div class="title-main">
+      <div class="a2hs" id="a2hs" hidden><div><b>想要滿版像 App 一樣玩？</b><br><span id="a2hsText"></span></div>
+        <button class="mini" id="a2hsOk" type="button">知道了</button></div>
       <div class="pn-title">今晚的頭條就是你</div>
       <h2>百萬訂閱一夕歸零，你要怎麼道歉？</h2>
       <p>你是剛翻車的網紅。讀完爆料後，你有 180 秒寫出道歉聲明。6 種網友會在留言區公審你，AI 裁判會逐題檢查你有沒有回答網友的三大質疑。</p>
@@ -422,7 +439,7 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
         <button class="btn" id="startBtn" type="button">開始挑戰</button>
         <button class="btn ghost" id="helpBtn" type="button">玩法說明</button>
       </div>
-      <p class="small-note">沒有設定 API Key 時走離線模式，一樣可以完整遊玩。所有人物、平台、媒體皆為虛構。</p>
+      <p class="small-note">AI 判讀不必輸入金鑰；線路忙碌時自動改走離線模式，一樣可以完整遊玩。所有人物、平台、媒體皆為虛構。</p>
     </div>
     <div>
       <div class="pn-title">最佳紀錄</div>
@@ -578,11 +595,11 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
 <dialog id="settings" aria-label="設定">
   <form method="dialog" class="pn">
     <h2>設定</h2>
-    <label>Command Code API Key（只存在這台裝置的瀏覽器）
-      <input type="password" id="setKey" autocomplete="off" placeholder="留空＝離線模式"></label>
-    <label>模型<select id="setModel"></select></label>
+    <label>Command Code API Key（選填，只存在這台裝置的瀏覽器）
+      <input type="password" id="setKey" autocomplete="off" placeholder="留空＝使用公用 AI 線路"></label>
+    <label>模型（只套用於自己的 Key）<select id="setModel"></select></label>
     <label class="chk"><input type="checkbox" id="setSound"> 開啟背景音樂與音效</label>
-    <p>Key 不會上傳到任何地方，只用來從這個網頁直接呼叫 Command Code。公開展演時請勿在他人裝置輸入。</p>
+    <p>遊戲預設透過公用 AI 線路判讀，不必輸入 Key；線路忙碌或額度用完時改用這裡的 Key，再不行就走離線模式。Key 不會上傳到任何地方，只用來從這個網頁直接呼叫 Command Code。公開展演時請勿在他人裝置輸入。</p>
     <div class="row">
       <button class="mini" id="setClear" type="button">清除最佳紀錄</button>
       <button class="mini" value="cancel">取消</button>
@@ -1165,6 +1182,9 @@ const G = {
   revised:false, helperUsed:false, round:null, first:null, fans:0, flame:0, trust:0, shown:0, source:"offline"
 };
 const MODELS = ["deepseek/deepseek-v4.1-flash-fast","z-ai/glm-5.3-flash","google/gemini-3.8-flash"];
+/* 公用 AI 線路：Cloudflare Worker 中繼伺服器（worker/，見 docs/dev/實作規格書.md 第七章），金鑰存在伺服器端，玩家免輸入。留空字串＝停用 */
+const RELAY_URL = "https://firestorm-relay.eddy08160.workers.dev/judge";
+const relay = {state:"unknown", pausedUntil:0};   // state：unknown（尚未探測）／ok／off（未部署或未設金鑰）
 const settings = Object.assign({key:"", model:MODELS[0], sound:null}, store.get("fpr_settings", {}));
 Sound.on = settings.sound===null ? !isPhone() : settings.sound;
 
@@ -1593,6 +1613,42 @@ async function callLLMJudge(c){
     return JSON.parse(m[0]);
   } finally { clearTimeout(to); }
 }
+/* 公用線路：只送角色、事件、策略與聲明稿，Prompt 由 Worker 組裝 */
+async function callRelay(c){
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
+  try{
+    const res = await fetch(RELAY_URL, {
+      method:"POST", signal:ctrl.signal, headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({character:c.char, event_id:c.event.id, tactics:c.tactics, statement:c.text, revise_of:c.prevFlaws||null})
+    });
+    // 被限流（每 IP 每小時或全站每日上限）：暫停 10 分鐘，期間改走玩家 Key 或離線
+    if(res.status===429){ relay.pausedUntil = Date.now()+10*60*1000; updateModeTag(); }
+    if(res.status===503){ relay.state = "off"; updateModeTag(); }
+    if(!res.ok) throw new Error("relay-"+res.status);
+    const data = await res.json();
+    if(!data || !data.judge) throw new Error("relay-empty");
+    return data.judge;
+  } finally { clearTimeout(to); }
+}
+/* 開場探測公用線路是否已部署並設好金鑰，讓右上角模式標籤反映實況 */
+async function probeRelay(){
+  if(!RELAY_URL){ relay.state = "off"; return; }
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 5000);
+  try{
+    const res = await fetch(RELAY_URL.replace(/\/judge$/,"/health"), {signal:ctrl.signal});
+    const data = await res.json();
+    relay.state = data && data.ready === true ? "ok" : "off";
+  }catch(e){ relay.state = "off"; }
+  finally{ clearTimeout(to); updateModeTag(); }
+}
+const relayReady = () => !!RELAY_URL && relay.state!=="off" && Date.now()>=relay.pausedUntil;
+const aiReady = () => relayReady() || !!settings.key;
+/* 判讀來源順序：公用線路 → 玩家自己的 Key → 回傳 null 改走離線 */
+async function askAI(c){
+  if(relayReady()){ try{ return await callRelay(c); }catch(e){} }
+  if(settings.key){ try{ return await callLLMJudge(c); }catch(e){} }
+  return null;
+}
 function normalizeLLM(j, off){
   const out = {...off};
   if(Array.isArray(j.inquiries) && j.inquiries.length===3) out.inquiries = j.inquiries.map(x=> String(x).includes("answer") ? "answered" : "dodged");
@@ -1624,11 +1680,12 @@ async function publish(timeout=false){
   $("verdictBtns").hidden = true;
 
   let judge = offlineJudge(text, G.event), source = "offline";
-  if(!afk && settings.key){
+  if(!afk && aiReady()){
     $("apiNote").textContent = "AI 裁判長閱卷中……（等待期間不計時）";
-    try{ const j = await callLLMJudge(c); judge = normalizeLLM(j, judge); source = "llm"; $("apiNote").textContent=""; }
-    catch(e){ $("apiNote").textContent = "線路忙碌，改由離線名醫看診。"; }
-  } else $("apiNote").textContent = settings.key ? "" : "離線模式（未設定 API Key）";
+    const j = await askAI(c);
+    if(j){ judge = normalizeLLM(j, judge); source = "llm"; $("apiNote").textContent=""; }
+    else $("apiNote").textContent = "線路忙碌，改由離線名醫看診。";
+  } else $("apiNote").textContent = aiReady() ? "" : (RELAY_URL ? "離線模式（公用 AI 線路休息中）" : "離線模式（未設定 API Key）");
   if(G.state!==STATE_AUDITING) return;
   const r = scoreRound(judge, c);
   const ctx = {afk, flags:r.flags, tactics:c.tactics, helperUsed:c.helperUsed, ghost:judge.ghostwrite_suspect, dodged:r.D, S:r.S, H:r.H, judge, text};
@@ -1799,14 +1856,50 @@ function saveSettings(){
   settings.key = $("setKey").value.trim(); settings.model = $("setModel").value; settings.sound = $("setSound").checked;
   Sound.on = settings.sound; store.set("fpr_settings", settings); updateModeTag(); Music.sync();
 }
-function updateModeTag(){ $("modeTag").textContent = settings.key ? "AI 模式" : "離線模式"; $("soundBtn").textContent = Sound.on ? "聲音 開" : "聲音 關"; }
+function updateModeTag(){ $("modeTag").textContent = aiReady() ? "AI 模式" : "離線模式"; $("soundBtn").textContent = Sound.on ? "聲音 開" : "聲音 關"; }
+
+/* ==================== 加入主畫面（滿版 App 模式） ==================== */
+// iOS Safari 不允許網頁隱藏網址列與工具列；從主畫面圖示開啟時才是無瀏覽器外框的全螢幕模式。
+// 單檔部署沒有 manifest 與圖示檔，故於執行時以 canvas 畫出火焰圖示，並以 data URL 產生 manifest。
+const isIOS = () => /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || matchMedia("(display-mode: fullscreen)").matches || navigator.standalone===true;
+function appIcon(size){
+  const c=document.createElement("canvas"); c.width=c.height=size; const x=c.getContext("2d");
+  x.fillStyle="#0c1230"; x.fillRect(0,0,size,size);
+  const px=Math.floor(size/16), ox=Math.floor((size-10*px)/2), oy=Math.floor((size-11*px)/2);
+  x.save(); x.translate(ox,oy); x.scale(px,px); draw(x, FLAME, {k:K,K:K,o:"#ff4d5e",y:"#ff8a1f",w:"#ffe08a"},0,0); x.restore();
+  return c.toDataURL("image/png");
+}
+function setupAppMode(){
+  try{
+    const i180=appIcon(180), i192=appIcon(192), i512=appIcon(512), start=location.href.split("#")[0].split("?")[0];
+    $("appIcon").href=i180; $("favIcon").href=i192;
+    const mf={name:"炎上大作戰：危機公關 180 秒", short_name:"炎上大作戰", start_url:start, scope:start.replace(/[^/]*$/,""),
+      display:"standalone", orientation:"portrait", background_color:"#0c1230", theme_color:"#0c1230",
+      icons:[{src:i192,sizes:"192x192",type:"image/png"},{src:i512,sizes:"512x512",type:"image/png",purpose:"any maskable"}]};
+    $("appManifest").href="data:application/manifest+json,"+encodeURIComponent(JSON.stringify(mf));
+  }catch(e){}
+  if(isStandalone()) document.body.classList.add("app");
+  const box=$("a2hs");
+  if(!isPhone() || isStandalone() || store.get("fpr_a2hs_seen", false)) return;
+  $("a2hsText").textContent = isIOS()
+    ? "點 Safari 的「分享」鈕，選「加入主畫面」，之後從主畫面的火焰圖示開啟，就沒有網址列和工具列。"
+    : "按「開始挑戰」會自動切到全螢幕；也可以從瀏覽器選單選「加到主畫面」或「安裝應用程式」，之後從圖示開啟。";
+  box.hidden=false;
+  $("a2hsOk").onclick=()=>{ box.hidden=true; store.set("fpr_a2hs_seen", true); };
+}
+function tryFullscreen(){
+  const el=document.documentElement;
+  if(!isPhone() || isStandalone() || document.fullscreenElement || !el.requestFullscreen) return;
+  el.requestFullscreen({navigationUI:"hide"}).catch(()=>{});
+}
 
 /* ==================== 啟動 ==================== */
 function boot(){
   draw($("logoFlame").getContext("2d"), FLAME, {k:K,K:K,o:"#ff4d5e",y:"#ff8a1f",w:"#ffe08a"},0,0);
   $("setModel").innerHTML = MODELS.map(m=>`<option value="${m}">${m}</option>`).join("");
   document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>onTab(b.dataset.v));
-  $("startBtn").onclick = ()=>{ Sound.unlock(); Sound.click(); renderSelect(); setState(STATE_SELECT); };
+  $("startBtn").onclick = ()=>{ tryFullscreen(); Sound.unlock(); Sound.click(); renderSelect(); setState(STATE_SELECT); };
   $("helpBtn").onclick = ()=>setView("help");
   $("helpBack").onclick = ()=>setView(VIEW_OF[G.state]);
   $("selBack").onclick = ()=>{ renderTitle(); setState(STATE_TITLE); };
@@ -1833,7 +1926,7 @@ function boot(){
   document.addEventListener("pointerdown", ()=>{ Sound.unlock(); Music.sync(); }, {once:true});
   document.addEventListener("keydown", ()=>{ Sound.unlock(); Music.sync(); }, {once:true});
   document.addEventListener("visibilitychange", ()=>Music.sync());
-  renderTitle(); updateModeTag(); setState(STATE_TITLE);
+  setupAppMode(); renderTitle(); updateModeTag(); setState(STATE_TITLE); probeRelay();
 }
 boot();
 </script>

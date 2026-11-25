@@ -29,6 +29,7 @@ firestorm-pr-180s/
 ├── README.md                  # 專案首頁、玩法簡介與整體進度清單
 ├── index.html                 # 【展示與應用層】遊戲正式本體（純前端單檔，部署於 GitHub Pages；待建立）
 ├── worker/                    # 可選的 Cloudflare Worker 中繼程式（代管 API 金鑰；待建立，見 TD-012）
+├── .github/workflows/pages.yml # GitHub Pages 發布流程（只上傳 index.html）
 ├── .agents/skills/            # 專屬 Skill 正本（見第四章）
 ├── .claude/skills/            # 供 Claude Code（含手機／網頁版）載入之轉介檔，內容指向 .agents/skills/ 正本
 └── docs/                      # 【知識與協作層】

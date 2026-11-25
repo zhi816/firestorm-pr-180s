@@ -162,3 +162,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：建立根目錄 `index.html`（單檔，沿用樣張 v3 元件 CSS 與點陣繪圖）：封面與最佳紀錄、`STATE_SELECT` 選角（4 位主角同骨架換配件）、依角色抽 10 則事件、180 秒計時（寫稿起算、送審暫停、裁決頁繼續倒數）、策略指令與道歉影片圖層、6 人設留言瀑布流與手機直播聊天室、`STATE_VERDICT` 裁決頁與 `STATE_REVISE` 撤回（限 1 次、截圖流出懲罰）、`offlineJudge()` 與 `scoreRound()` 前端計分、Command Code `callLLMJudge()`（未以真實 Key 實測）、五種結局像素新聞卡（一鍵下載）、名醫診斷書、Web Audio 音效、設定彈窗。以內建瀏覽器 iframe 於 1360／900／390 寬度與無頭 Chrome 截圖驗證：無 JS 錯誤、無橫向溢出、5 組測試稿結局符合預期；依實測下修計分係數並同步實作規格書。「知識型 YouTuber」改為「知識型影片創作者」以符合虛構品牌原則。完成並刪除 `TD-003`、`TD-004`、`TD-005`；`TD-006`、`TD-007`、`TD-010`、`TD-011` 補進度；登記 `FP-002`（Cubic 11 子集缺字）。
+
+## [2026-11-25 09:34] config | 新增 GitHub Pages 發布流程（只發布 index.html） | #測試驗證
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：依使用者決定比照 Epoch-Kairos，新增 `.github/workflows/pages.yml`：`main` 上 `index.html` 或本流程檔變動時（或手動觸發）只把 `index.html` 打包上傳 GitHub Pages，文件、樣張與日後的 `worker/` 不上站，供手機實機測試（`TD-008`）。更新 `AGENTS.md` 架構樹與 `TD-009` 進度；待使用者將 Pages Source 設為 GitHub Actions。

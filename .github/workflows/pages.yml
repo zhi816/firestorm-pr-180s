@@ -1,0 +1,50 @@
+# 將遊戲本體 index.html 發布至 GitHub Pages（見 docs/todo.md TD-009）。
+# 只上傳 index.html；docs/、.agents/、AGENTS.md、樣張與日後的 worker/ 皆不上站。
+# 倉庫 Settings -> Pages 之 Source 須設為「GitHub Actions」。
+name: Deploy index.html to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一次發布；進行中之發布不取消，以免站點停在半途。
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Assemble site (index.html only)
+        run: |
+          mkdir -p _site
+          cp index.html _site/index.html
+          touch _site/.nojekyll
+
+      - name: Upload site as Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

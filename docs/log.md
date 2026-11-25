@@ -274,3 +274,9 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：完成 `TD-013`、`TD-014`、`TD-016`。（1）實測線上 Worker 各候選模型：`Qwen/Qwen3.7-Flash` `/crowd` 超過 30 秒逾時、`tencent/hy4-flash`（`"off"`）`/crowd` 5.31 秒回非 JSON、`xiaomi/mimo-v2.6-flash` `/judge` 20.25 秒成功（172 reasoning tokens）、`deepseek/deepseek-v4.1-flash-fast`（`reasoning_effort: "off"`）`/crowd` 2.69 秒、`/judge` 2.59 秒（皆為 0 reasoning tokens 且 JSON 與笑果俱佳），故將兩位預設改回 `deepseek/deepseek-v4.1-flash-fast`（`"off"`）並保留各自覆蓋變數，Worker 逾時定為網民 12 秒／裁判 24 秒（前端 13 秒／25 秒）；（2）依使用者提案調整 `index.html` 公審流程：送審先呼叫網民大軍，一拿到留言即開播公審動畫並於手機版對話框下方直接顯示完整「炎串 · 留言區」（`STATE_AUDITING` 亦適用 `.stage { display: contents }` 與 `order` 排序），同時在背景並行呼叫裁判長；裁判完成後啟用【查看裁判長判決 ▶】按鈕由玩家主動跳轉（提前點擊時自動補齊剩餘留言）；（3）同步更新 [實作規格書.md](dev/實作規格書.md)、[中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md)、[美術設計規格書.md](art/美術設計規格書.md) 與 [DESIGN.md](../DESIGN.md)，並刪除 `docs/todo.md` 已完成之 `TD-013`、`TD-014`、`TD-016`。驗證：Worker 模擬 3 項、無頭 Chrome `verify_app.js` 桌面（1360×900）與手機（390×844）`FAIL 0, WARN 0`、手機版延遲背景裁判與撤回斷網端到端測試全過；`lint_project.py` ERROR 0。
+
+
+## [2026-11-25 19:03] fix | 手機版裁決頁將判決提示對話框置於最上方（裁判面板與留言區之上） | #手機版
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：依使用者手機實機截圖回饋，調整 `index.html` 手機版（`<=760px`）`data-view="verdict"` 版面順序：透過 `.stage { display: contents }` 與 `order` 排序，將 `#dlg`（「裁判長宣讀判決！倒數繼續跑，要認了，還是【緊急撤回】？」）置頂於 `#verdictPn`（裁判長判決面板）上方，`#feedPn`（炎串 · 留言區）維持在最下方，避免長留言區把判決提示推到頁尾。同步更新 [DESIGN.md](../DESIGN.md) 第三章第 2 項與 [美術設計規格書.md](art/美術設計規格書.md) 第九章第 2 節。驗證：無頭 Chrome `verify_app.js` 桌面（1360×900）與手機（390×844）`FAIL 0, WARN 0`，手機 `STATE_VERDICT` 元素座標依序為 `#dlg`（72px）→ `#verdictPn`（176px）→ `#feedPn`（710.8px）且橫向溢出 `0px`；`lint_project.py` ERROR 0。

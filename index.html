@@ -325,12 +325,16 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   #bossPn,#qPn,.monitor,#dlg{display:none !important}
   body[data-view="crisis"] #bossPn,body[data-view="crisis"] #qPn{display:block !important}
   body[data-view="draft"] .monitor,body[data-view="audit"] .monitor{display:block !important}
-  body[data-view="audit"] .stage{display:contents}
+  body:is([data-view="audit"],[data-view="verdict"]) .stage{display:contents}
   body[data-view="audit"] .monitor{order:1}
   body[data-view="audit"] #apiNote{order:2}
   body[data-view="audit"] #dlg{order:3}
   body[data-view="audit"] #auditAct{order:4;margin-top:0}
   body[data-view="audit"] #feedPn{order:5}
+  body[data-view="verdict"] #dlg{order:1}
+  body[data-view="verdict"] #verdictPn{order:2}
+  body[data-view="verdict"] #apiNote{order:3}
+  body[data-view="verdict"] #feedPn{order:4}
   body[data-view="audit"] #dlg,body[data-view="verdict"] #dlg{display:grid !important}
   body:is([data-view="audit"],[data-view="verdict"]) #feedPn{display:block;overflow-x:hidden}
   body:is([data-view="audit"],[data-view="verdict"]) #feedPn .feed{max-height:none;overflow:visible;padding:0}

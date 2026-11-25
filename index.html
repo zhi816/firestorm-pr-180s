@@ -400,7 +400,7 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
     </div>
     <div class="hdr-r">
       <span class="mode" id="modeTag">離線模式</span>
-      <button class="mini" id="soundBtn" type="button">音效 開</button>
+      <button class="mini" id="soundBtn" type="button">聲音 開</button>
       <button class="mini" id="settingsBtn" type="button">設定</button>
       <div class="pn timer" id="timer"><span>剩餘時間</span><b id="clock">03:00</b></div>
     </div>
@@ -581,7 +581,7 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
     <label>Command Code API Key（只存在這台裝置的瀏覽器）
       <input type="password" id="setKey" autocomplete="off" placeholder="留空＝離線模式"></label>
     <label>模型<select id="setModel"></select></label>
-    <label class="chk"><input type="checkbox" id="setSound"> 開啟音效</label>
+    <label class="chk"><input type="checkbox" id="setSound"> 開啟背景音樂與音效</label>
     <p>Key 不會上傳到任何地方，只用來從這個網頁直接呼叫 Command Code。公開展演時請勿在他人裝置輸入。</p>
     <div class="row">
       <button class="mini" id="setClear" type="button">清除最佳紀錄</button>
@@ -1068,6 +1068,94 @@ const Sound = {
   click(){ this.tone(660,.04,"square",.03); }
 };
 
+/* ==================== 背景音樂（Web Audio 即時合成，無音檔） ==================== */
+// 兩首循環曲：fun（搞笑輕快，C 大調、彈跳低音＋滑音）用於封面、選角、爆料、公審與結局；
+// tense（緊張，A 小調、八分音符脈動、時鐘滴答與半音拉扯）用於寫稿與撤回改稿，剩 30 秒加速，最後 10 秒讓位給心跳。
+const Music = {
+  want:null, cur:null, timer:null, gain:null, noiseBuf:null, step:0, next:0, VOL:.12,
+  NOTE:{C:0,D:2,E:4,F:5,G:7,A:9,B:11},
+  parse(bars){ // "C5 . E5 - G4v C6^"：. 休止、- 延長、v 下滑、^ 上滑（彈簧聲）
+    const ev={}; let last=null;
+    bars.join(" ").trim().split(/\s+/).forEach((tk,i)=>{
+      if(tk==="."){ last=null; return; }
+      if(tk==="-"){ if(last) last.len++; return; }
+      const m=tk.match(/^([A-G])(#?)(\d)([v^]?)$/); if(!m) return;
+      last={midi:12*(+m[3]+1)+this.NOTE[m[1]]+(m[2]?1:0), len:1, slide:m[4]==="v"?-5:m[4]==="^"?12:0}; ev[i]=last;
+    });
+    return ev;
+  },
+  hz(m){ return 440*Math.pow(2,(m-69)/12); },
+  note(m,t,dur,type,vol,slide=0){
+    const c=Sound.ctx, o=c.createOscillator(), g=c.createGain();
+    o.type=type; o.frequency.setValueAtTime(this.hz(m),t);
+    if(slide) o.frequency.exponentialRampToValueAtTime(this.hz(m+slide),t+dur);
+    g.gain.setValueAtTime(vol,t); g.gain.setValueAtTime(vol,t+dur*.7); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    o.connect(g).connect(this.gain); o.start(t); o.stop(t+dur+.02);
+  },
+  thump(t,vol){ const c=Sound.ctx, o=c.createOscillator(), g=c.createGain();
+    o.type="sine"; o.frequency.setValueAtTime(110,t); o.frequency.exponentialRampToValueAtTime(40,t+.12);
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+.14); o.connect(g).connect(this.gain); o.start(t); o.stop(t+.16); },
+  hat(t,vol,dur,freq){ const c=Sound.ctx;
+    if(!this.noiseBuf){ const b=c.createBuffer(1,c.sampleRate*.5,c.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; this.noiseBuf=b; }
+    const src=c.createBufferSource(), f=c.createBiquadFilter(), g=c.createGain();
+    src.buffer=this.noiseBuf; f.type="highpass"; f.frequency.value=freq;
+    g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    src.connect(f).connect(g).connect(this.gain); src.start(t); src.stop(t+dur+.02); },
+  TRACKS:{
+    fun:{ bpm:140, len:64, init(M){
+        this.mel=M.parse(["C5 . E5 . G5 . E5 . F5 . A5 . G5 - . .", "E5 . C5 . D5 . B4 . C5 - - . G4v - . .",
+                          "C5 . E5 . G5 . C6 . B5 . A5 . G5 - . F5", "E5 . G5 . D5 . G4 . C5 - . . . . C6^ ."]); },
+      play(M,s,t,d){
+        const bar=s>>4, b=s&15, root=[48,43,41,43][bar];
+        const n=this.mel[s]; if(n) M.note(n.midi,t,d*n.len*.9,"square",.45,n.slide);
+        if(b===0||b===8) { M.note(b===0?root:root-5,t,d*3,"triangle",.9); M.thump(t,.6); }
+        if(b===4||b===12) [4,7].forEach(iv=>M.note(root+12+iv,t,d*.8,"square",.16));
+        if(b%4===2) M.hat(t,.25,.03,7000);
+      } },
+    tense:{ bpm:150, len:64, init(M){
+        this.lead=M.parse(["E5 - - - - - - - F5 - - - - - - -", "E5 - - - - - - - F5 - - - - - - -",
+                           "F5 - - - - - - - E5 - - - - - - -", "G#5 - - - A5 - - - B5 - - - C6 - - -"]); },
+      play(M,s,t,d){
+        const bar=s>>4, b=s&15, root=[33,33,29,28][bar], ch=[[57,60,64],[57,60,64],[53,57,60],[52,56,59]][bar];
+        if(b%2===0) M.note(root+(b%4===2?12:0),t,d*1.6,"square",.32);
+        M.note(ch[[0,1,2,1][b%4]],t,d*.9,"triangle",.3);
+        const n=this.lead[s]; if(n) M.note(n.midi,t,d*n.len*.95,"square",.13,n.slide);
+        if(b%4===0) M.hat(t,.3,.02,9000); else if(b%4===2) M.hat(t,.16,.02,4000);
+        if(b===0||b===3) M.thump(t,b===0?.7:.45);
+      } }
+  },
+  play(name){ this.want=name; this.sync(); },
+  sync(){
+    const ok = this.want && Sound.on && Sound.ctx && !document.hidden;
+    if(!ok){ this.stop(); return; }
+    if(this.cur===this.want && this.timer) return;
+    this.start(this.want);
+  },
+  start(name){
+    this.stop(); const c=Sound.ctx, tr=this.TRACKS[name];
+    if(!tr.ready){ tr.init(this); tr.ready=true; }
+    this.gain=c.createGain(); this.gain.gain.value=this.VOL; this.gain.connect(c.destination);
+    this.cur=name; this.step=0; this.next=c.currentTime+.08;
+    this.timer=setInterval(()=>this.pump(),25); this.pump();
+  },
+  stop(){
+    if(this.timer){ clearInterval(this.timer); this.timer=null; }
+    if(this.gain){ const g=this.gain, t=Sound.ctx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t);
+      g.gain.linearRampToValueAtTime(0,t+.15); setTimeout(()=>g.disconnect(),400); this.gain=null; }
+    this.cur=null;
+  },
+  pump(){
+    const c=Sound.ctx, tr=this.TRACKS[this.cur]; if(!tr||!this.gain) return;
+    const tense=this.cur==="tense", hurry=tense && G.sec<=30;
+    this.gain.gain.setTargetAtTime(tense && G.sec<=10 ? this.VOL*.45 : this.VOL, c.currentTime, .3);
+    const d=60/(tr.bpm*(hurry?1.18:1))/4;
+    if(this.next < c.currentTime-.2) this.next=c.currentTime+.05; // 分頁切回或卡頓時重新對齊
+    while(this.next < c.currentTime+.12){ tr.play(this, this.step%tr.len, this.next, d); this.next+=d; this.step++; }
+  }
+};
+const MUSIC_OF = {STATE_TITLE:"fun",STATE_SELECT:"fun",STATE_CRISIS:"fun",STATE_PR_DRAFT:"tense",STATE_REVISE:"tense",
+                  STATE_AUDITING:"fun",STATE_VERDICT:"fun",STATE_RESULT:"fun"};
+
 /* ==================== 遊戲狀態 ==================== */
 const STATE_TITLE="STATE_TITLE", STATE_SELECT="STATE_SELECT", STATE_CRISIS="STATE_CRISIS", STATE_PR_DRAFT="STATE_PR_DRAFT",
       STATE_AUDITING="STATE_AUDITING", STATE_VERDICT="STATE_VERDICT", STATE_REVISE="STATE_REVISE", STATE_RESULT="STATE_RESULT";
@@ -1084,6 +1172,7 @@ function setState(s){
   G.state = s;
   document.body.dataset.phase = s;
   setView(VIEW_OF[s]);
+  Music.play(MUSIC_OF[s]);
 }
 function setView(v){
   document.body.dataset.view = v; document.body.classList.remove("sheet");
@@ -1708,9 +1797,9 @@ function openSettings(){
 }
 function saveSettings(){
   settings.key = $("setKey").value.trim(); settings.model = $("setModel").value; settings.sound = $("setSound").checked;
-  Sound.on = settings.sound; store.set("fpr_settings", settings); updateModeTag();
+  Sound.on = settings.sound; store.set("fpr_settings", settings); updateModeTag(); Music.sync();
 }
-function updateModeTag(){ $("modeTag").textContent = settings.key ? "AI 模式" : "離線模式"; $("soundBtn").textContent = Sound.on ? "音效 開" : "音效 關"; }
+function updateModeTag(){ $("modeTag").textContent = settings.key ? "AI 模式" : "離線模式"; $("soundBtn").textContent = Sound.on ? "聲音 開" : "聲音 關"; }
 
 /* ==================== 啟動 ==================== */
 function boot(){
@@ -1735,13 +1824,15 @@ function boot(){
   $("settingsBtn").onclick = openSettings; $("settingsBtn2").onclick = openSettings;
   $("setSave").onclick = saveSettings;
   $("setClear").onclick = ()=>{ store.del("fpr_best"); renderTitle(); };
-  $("soundBtn").onclick = ()=>{ Sound.unlock(); Sound.on=!Sound.on; settings.sound=Sound.on; store.set("fpr_settings",settings); updateModeTag(); };
+  $("soundBtn").onclick = ()=>{ Sound.unlock(); Sound.on=!Sound.on; settings.sound=Sound.on; store.set("fpr_settings",settings); updateModeTag(); Music.sync(); };
   const stmt=$("stmt");
   stmt.addEventListener("input", renderSub);
   stmt.addEventListener("focus",()=>document.body.classList.add("typing"));
   stmt.addEventListener("blur",()=>setTimeout(()=>document.body.classList.remove("typing"),200));
   document.addEventListener("keydown",ev=>{ if(ev.key!=="Escape") return; if(document.body.classList.contains("sheet")) $("feedClose").click(); else if(document.body.dataset.view==="result") setView("audit"); });
-  document.addEventListener("pointerdown", ()=>Sound.unlock(), {once:true});
+  document.addEventListener("pointerdown", ()=>{ Sound.unlock(); Music.sync(); }, {once:true});
+  document.addEventListener("keydown", ()=>{ Sound.unlock(); Music.sync(); }, {once:true});
+  document.addEventListener("visibilitychange", ()=>Music.sync());
   renderTitle(); updateModeTag(); setState(STATE_TITLE);
 }
 boot();

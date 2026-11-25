@@ -1183,8 +1183,8 @@ const G = {
   revised:false, helperUsed:false, round:null, first:null, fans:0, flame:0, trust:0, shown:0, source:"offline"
 };
 const MODELS = ["deepseek/deepseek-v4.1-flash-fast","z-ai/glm-5.3-flash","google/gemini-3.8-flash"];
-/* 公用 AI 線路：Cloudflare Worker 中繼伺服器（worker/，見 docs/dev/實作規格書.md 第七章），金鑰存在伺服器端，玩家免輸入。留空字串＝停用 */
-const RELAY_URL = "https://firestorm-relay.eddy08160.workers.dev/judge";
+/* 公用 AI 線路：Cloudflare Worker 中繼伺服器（worker/，見 docs/dev/實作規格書.md 第七章），金鑰存在伺服器端，玩家免輸入。端點 /crowd、/judge、/health；留空字串＝停用 */
+const RELAY_BASE = "https://firestorm-relay.eddy08160.workers.dev";
 const relay = {state:"unknown", pausedUntil:0};   // state：unknown（尚未探測）／ok／off（未部署或未設金鑰）
 const settings = Object.assign({key:"", model:MODELS[0], sound:null}, store.get("fpr_settings", {}));
 Sound.on = settings.sound===null ? true : settings.sound; // 2026-11-25 使用者決定：電腦與手機皆預設開啟
@@ -1661,21 +1661,52 @@ function scoreRound(judge, c){
   return {S,H,D,F,flags,flame,trust,loss,ending,mult};
 }
 
-/* ==================== Command Code API ==================== */
-const SYSTEM_PROMPT = `你是遊戲《炎上大作戰：危機公關 180 秒》的危機公關模擬系統，熟悉台灣社群文化，講話辛辣又好笑。
-你同時扮演兩個角色：
-一、公關裁判長（Reflection 評論員）：先逐題比對網友三大質疑，判斷聲明稿是否正面回應；再評估誠意與甩鍋程度，找出 2 到 3 條致命敗筆（若寫得很好就改列做對的事）。
-二、網民大軍（Multi-Agent）：依序扮演 6 位網友留言，人設依序為「顯微鏡柯南」（抓語病與細節）、「激進黑粉」（嗆退訂）、「盲目死忠粉」（無腦護航反被群嘲）、「昔日合作廠商」（落井下石翻舊帳）、「蹭流量八卦客」（預告開台分析）、「迷因製造機」（把金句做成梗）。
-規則：
-- 只評估「聲明稿文字本身」。玩家勾選的策略由遊戲系統另外計分，你只能拿來當留言題材，不要因策略重複扣分。
+/* ==================== AI 判讀：網民大軍 → 公關裁判長（docs/dev/實作規格書.md 第四章） ==================== */
+/* ==== PROMPT 區塊開始：worker/build.mjs 會原樣抽出本區塊給 Worker 使用，區塊內只能引用 CHARACTERS、findTactic 與事件資料 ==== */
+const CROWD_NAMES = ["顯微鏡柯南","激進黑粉","盲目死忠粉","昔日合作廠商","蹭流量八卦客","迷因製造機"];
+const CROWD_PROMPT = `你是遊戲《炎上大作戰：危機公關 180 秒》裡的「網民大軍」。一位網紅剛在虛構社群「炎串」發了道歉聲明，你要一次扮演 6 位網友湧進留言區。
+6 位網友依序出場，每人有固定招式，語氣和切入點不能互相重複：
+1. 顯微鏡柯南：偵探口吻，一定要點出一個具體細節，例如聲明稿第幾段第幾句、影片第幾秒、畫面角落，或爆料裡的某個證據。
+2. 激進黑粉：短、狠、不囉嗦，最後一定接一個動作，例如退訂、檢舉、封鎖、取消追蹤。
+3. 盲目死忠粉：拚命護航，但護航的理由反而爆出更多黑料或更好笑的細節，越幫越忙。
+4. 昔日合作廠商：用客氣的商業口吻落井下石，附上一個符合事件的虛構「內幕」，例如當年合作時的小插曲。
+5. 蹭流量八卦客：預告自己要開台或發影片分析，給出標題黨式的片名或開台時間。
+6. 迷因製造機：把聲明稿裡最糟或最荒謬的一句話改成梗、口號、流行語或廣告詞。
+寫作規則：
+- 至少 3 則要用「」直接引用聲明稿裡的原句（10 字內）再吐槽，讓玩家知道你真的看了他寫的東西。
+- 盯緊爆料內容的具體證據（例如吊牌、冰箱、收據），以及網友三大質疑有沒有被回答；沒回答的題目要追打。
+- 玩家選的影片形式（例如鞠躬、黑底白字、關燈）與公關話術也是吐槽題材。
+- 自己判斷這篇寫得好不好：寫得誠懇具體時，酸民要不甘心地收手（例如黑粉說「先觀察」、柯南抓不到漏洞很失落、死忠粉喜極而泣）；寫得爛時全面圍剿。
+- 若是撤回後重發的第二版，可以嘲笑撤回這件事，並檢查上一版被點名的毛病有沒有改掉。
 - 調性荒謬搞笑，可以毒舌，但不得出現歧視、仇恨、性騷擾或針對真實人物的內容。所有媒體與平台一律用虛構名稱：炎上新聞台 FNN、炎串、爆料版。
-- 留言可適度使用 2026 年台灣社群與爆料版的網路用語（例如留友看、破防、硬控、質疑理解成為），每次最多兩則用梗，不要使用已過時或與真實人物綁定的梗。
-- 一律使用繁體中文。每則留言 40 字以內，敗筆每條 30 字以內。
+- 可適度使用 2026 年台灣社群與爆料版的網路用語（例如留友看、破防、硬控、質疑理解成為），6 則中最多 2 則用梗，不要使用已過時或與真實人物綁定的梗。
+- 一律使用繁體中文，每則 40 字以內，留言內容不要加人設名稱或編號。
 - 只輸出一個 JSON 物件，不要任何說明文字或 Markdown 代碼框。格式：
-{"inquiries":["answered 或 dodged","...","..."],"sincerity":0到100整數,"shirking":0到100整數,"red_flags":[從 threat_lawsuit、guilt_trip、profanity、contradiction 中選，沒有就空陣列],"ghostwrite_suspect":稿子是否工整完美到像 AI 代寫（true 或 false）,"core_attitude":"10 字內診斷","critical_flaws":["..."],"expert_verdict":"20 字內犀利總結","comments":[{"comment":"..."},六則依人設順序],"headline":"炎上新聞台 FNN 新聞標題，30 字內"}`;
-function userPrompt(c){
+{"comments":["顯微鏡柯南的留言","激進黑粉的留言","盲目死忠粉的留言","昔日合作廠商的留言","蹭流量八卦客的留言","迷因製造機的留言"]}`;
+const JUDGE_PROMPT = `你是遊戲《炎上大作戰：危機公關 180 秒》裡的「公關裁判長」，身分是「炎上急診室」主治醫師：看過一萬份道歉聲明，對官腔過敏，講話像毒舌名醫，冷靜、精準、帶點幸災樂禍。
+你會拿到爆料內容、網友三大質疑、玩家選的策略、聲明稿全文，以及網民大軍剛留下的 6 則留言。請替這份聲明稿看診，依照 JSON 欄位的順序思考與填寫：先找病灶，最後才打分。
+1. inquiries：依三大質疑的順序逐題判斷。有正面且具體的回應才算 "answered"；只說「會檢討」「造成困擾」「會給大家交代」之類的空話，或根本沒提，一律算 "dodged"。
+2. critical_flaws：2 到 3 條致命敗筆。每條先用「」引用聲明稿原句（10 字內），再用一句話戳破它，每條 40 字以內；可以引用網友留言當佐證，例如「連柯南都抓到……」。若三題都正面回應且態度誠懇，改列 2 到 3 條做對的事，但語氣要很不甘心。
+3. red_flags：只能從下列代碼挑，沒有就空陣列。threat_lawsuit＝威脅提告或寄律師函；guilt_trip＝拿病痛、壓力或家人博同情；profanity＝罵髒話或辱罵網友；contradiction＝前後說法矛盾，或與爆料的證據直接衝突。
+4. ghostwrite_suspect：稿子工整到像 AI 代寫（首先、其次、最後、綜上所述，四平八穩、毫無個人語氣）時為 true，否則 false。
+5. core_attitude：10 字內的病名，例如「急性甩鍋併發官腔」。
+6. expert_verdict：20 字內的醫囑，要犀利到讓人想截圖。
+7. headline：炎上新聞台 FNN 的新聞標題，30 字內，可用【獨家】或【快訊】開頭，優先引用聲明稿裡最糟的一句。
+8. 最後才打分，分數必須能由前面列出的敗筆推得出來：
+   sincerity（誠意，0 到 100 整數）：神隱、威脅、罵人 0～20；官腔模板或只道歉不處理 30～50；三題都回應但沒有具體做法 55～75；三題都回應，且寫出金額、日期、名單等具體做法 80 以上。
+   shirking（甩鍋，0 到 100 整數）：全部自己扛 0～20；部分推給外包、員工或家人 40～60；幾乎全推給別人 80 以上。
+規則：
+- 評分只看聲明稿文字本身。網友留言只能當引用的佐證，不可因為網友很兇就扣分；玩家選的策略由遊戲系統另外計分，不要重複扣分。
+- 評語要扣回爆料的具體證據，不要寫成放諸四海皆準的空泛評語。
+- 若是撤回後重發的第二版，逐條檢查上一版的敗筆有沒有改掉：改掉的要承認，沒改的加倍嘲諷。
+- 調性荒謬搞笑，可以毒舌，但不得出現歧視、仇恨、性騷擾或針對真實人物的內容。所有媒體與平台一律用虛構名稱：炎上新聞台 FNN、炎串、爆料版。
+- 一律使用繁體中文。
+- 只輸出一個 JSON 物件，不要任何說明文字或 Markdown 代碼框，欄位順序照下列格式：
+{"inquiries":["answered 或 dodged","...","..."],"critical_flaws":["..."],"red_flags":[],"ghostwrite_suspect":false,"core_attitude":"...","expert_verdict":"...","headline":"...","sincerity":0,"shirking":0}`;
+/* 兩位 AI 共用的情境說明：角色、爆料、三大質疑、策略、撤回資訊與聲明稿 */
+function promptHead(c){
   const ch=CHARACTERS[c.char], ev=c.event;
-  const tac = c.tactics.map(id=>findTactic(ev,id).label).join("、") || "沒有勾選";
+  const pick = list => c.tactics.filter(id=>list.some(t=>t.id===id)).map(id=>findTactic(ev,id).label).join("、") || "沒有選";
   return `【角色】${ch.name}（${ch.role}，${ch.desc}）
 【翻車事件】${ev.title}
 【爆料內容】${ev.bg_alert}
@@ -1683,21 +1714,38 @@ function userPrompt(c){
 1. ${ev.inquiries[0].q}
 2. ${ev.inquiries[1].q}
 3. ${ev.inquiries[2].q}
-【玩家勾選策略】${tac}
-${c.prevFlaws ? "【這是撤回後第二次送審，上次被挑出的敗筆】"+c.prevFlaws.join("；")+"\n請評估這次有沒有改善。\n" : ""}【玩家的聲明稿】
+【影片形式】${pick(ev.forms)}
+【公關話術】${pick(ev.talks)}
+${c.prevFlaws ? "【這是撤回後重發的第二版，上一版被裁判點名的敗筆】"+c.prevFlaws.join("；")+"\n" : ""}【玩家的聲明稿】
 """
 ${c.text}
 """`;
 }
-async function callLLMJudge(c){
+function crowdPrompt(c){
+  return promptHead(c) + "\n請依人設順序寫出 6 則留言。";
+}
+function judgePrompt(c, crowd){
+  const list = crowd && crowd.length ? crowd.map((s,i)=>`${i+1}. ${CROWD_NAMES[i]}：${s}`).join("\n") : "（網友留言暫時載入失敗，請只依聲明稿看診）";
+  return promptHead(c) + `\n【網民大軍的留言】\n${list}\n請開始看診。`;
+}
+/* ==== PROMPT 區塊結束 ==== */
+
+/* 每位 AI 的呼叫參數：網民要有創意，裁判要穩定 */
+const AI_KINDS = {
+  crowd:{system:CROWD_PROMPT, user:(c)=>crowdPrompt(c), max_tokens:900, temperature:.9},
+  judge:{system:JUDGE_PROMPT, user:(c,crowd)=>judgePrompt(c,crowd), max_tokens:1100, temperature:.7}
+};
+/* 玩家自備 Key：從這個網頁直接呼叫 Command Code */
+async function callLLM(kind, c, crowd){
   if(!settings.key) throw new Error("no-key");
+  const k = AI_KINDS[kind];
   const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
   try{
     const res = await fetch("https://api.commandcode.ai/provider/v1/chat/completions", {
       method:"POST", signal:ctrl.signal,
       headers:{"Authorization":"Bearer "+settings.key, "Content-Type":"application/json"},
-      body: JSON.stringify({model:settings.model, temperature:.8, max_tokens:1400,
-        messages:[{role:"system",content:SYSTEM_PROMPT},{role:"user",content:userPrompt(c)}]})
+      body: JSON.stringify({model:settings.model, temperature:k.temperature, max_tokens:k.max_tokens,
+        messages:[{role:"system",content:k.system},{role:"user",content:k.user(c,crowd)}]})
     });
     if(!res.ok) throw new Error("http-"+res.status);
     const data = await res.json();
@@ -1707,43 +1755,52 @@ async function callLLMJudge(c){
     return JSON.parse(m[0]);
   } finally { clearTimeout(to); }
 }
-/* 公用線路：只送角色、事件、策略與聲明稿，Prompt 由 Worker 組裝 */
-async function callRelay(c){
+/* 公用線路：只送角色、事件、策略、聲明稿（裁判另附網民留言），Prompt 由 Worker 組裝 */
+async function callRelay(kind, c, crowd){
   const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
   try{
-    const res = await fetch(RELAY_URL, {
-      method:"POST", signal:ctrl.signal, headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({character:c.char, event_id:c.event.id, tactics:c.tactics, statement:c.text, revise_of:c.prevFlaws||null})
+    const body = {character:c.char, event_id:c.event.id, tactics:c.tactics, statement:c.text, revise_of:c.prevFlaws||null};
+    if(kind==="judge") body.crowd = crowd || null;
+    const res = await fetch(`${RELAY_BASE}/${kind}`, {
+      method:"POST", signal:ctrl.signal, headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
     });
     // 被限流（每 IP 每小時或全站每日上限）：暫停 10 分鐘，期間改走玩家 Key 或離線
     if(res.status===429){ relay.pausedUntil = Date.now()+10*60*1000; updateModeTag(); }
     if(res.status===503){ relay.state = "off"; updateModeTag(); }
     if(!res.ok) throw new Error("relay-"+res.status);
     const data = await res.json();
-    if(!data || !data.judge) throw new Error("relay-empty");
-    return data.judge;
+    if(!data || !data[kind]) throw new Error("relay-empty");
+    return data[kind];
   } finally { clearTimeout(to); }
 }
 /* 開場探測公用線路是否已部署並設好金鑰，讓右上角模式標籤反映實況 */
 async function probeRelay(){
-  if(!RELAY_URL){ relay.state = "off"; return; }
+  if(!RELAY_BASE){ relay.state = "off"; return; }
   const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 5000);
   try{
-    const res = await fetch(RELAY_URL.replace(/\/judge$/,"/health"), {signal:ctrl.signal});
+    const res = await fetch(`${RELAY_BASE}/health`, {signal:ctrl.signal});
     const data = await res.json();
     relay.state = data && data.ready === true ? "ok" : "off";
   }catch(e){ relay.state = "off"; }
   finally{ clearTimeout(to); updateModeTag(); }
 }
-const relayReady = () => !!RELAY_URL && relay.state!=="off" && Date.now()>=relay.pausedUntil;
+const relayReady = () => !!RELAY_BASE && relay.state!=="off" && Date.now()>=relay.pausedUntil;
 const aiReady = () => relayReady() || !!settings.key;
-/* 判讀來源順序：公用線路 → 玩家自己的 Key → 回傳 null 改走離線 */
-async function askAI(c){
-  if(relayReady()){ try{ return await callRelay(c); }catch(e){} }
-  if(settings.key){ try{ return await callLLMJudge(c); }catch(e){} }
+/* 每位 AI 的來源順序：公用線路 → 玩家自己的 Key → 回傳 null 改走離線 */
+async function askAI(kind, c, crowd){
+  if(relayReady()){ try{ return await callRelay(kind, c, crowd); }catch(e){} }
+  if(settings.key){ try{ return await callLLM(kind, c, crowd); }catch(e){} }
   return null;
 }
-function normalizeLLM(j, off){
+/* 網民留言：至少 6 則才採用，依人設順序配對 */
+function normalizeCrowd(j){
+  const list = j && Array.isArray(j.comments) ? j.comments : null;
+  if(!list || list.length<6) return null;
+  const out = list.slice(0,6).map((x,i)=>({persona:PERSONA_ORDER[i], comment:String(typeof x==="string" ? x : (x&&x.comment)||"").trim().slice(0,80)}));
+  return out.every(x=>x.comment) ? out : null;
+}
+/* 裁判判讀：欄位缺漏以離線判讀補齊 */
+function normalizeJudge(j, off){
   const out = {...off};
   if(Array.isArray(j.inquiries) && j.inquiries.length===3) out.inquiries = j.inquiries.map(x=> String(x).includes("answer") ? "answered" : "dodged");
   if(Number.isFinite(+j.sincerity)) out.sincerity = clamp(+j.sincerity,0,100);
@@ -1752,7 +1809,6 @@ function normalizeLLM(j, off){
   out.ghostwrite_suspect = j.ghostwrite_suspect===true;
   for(const k of ["core_attitude","expert_verdict","headline"]) if(typeof j[k]==="string" && j[k].trim()) out[k]=j[k].trim().slice(0,60);
   if(Array.isArray(j.critical_flaws) && j.critical_flaws.length) out.critical_flaws = j.critical_flaws.slice(0,3).map(s=>String(s).slice(0,60));
-  if(Array.isArray(j.comments) && j.comments.length>=6) out.comments = j.comments.slice(0,6).map((x,i)=>({persona:PERSONA_ORDER[i], comment:String(x.comment||x).slice(0,80)}));
   return out;
 }
 
@@ -1774,13 +1830,18 @@ async function publish(timeout=false){
   dlg(`${esc(CHARACTERS[G.char].name)} 發布了聲明！……網友正在輸入中 <span class="dots">▮▮▮</span>`);
   $("verdictBtns").hidden = true;
 
-  let judge = offlineJudge(text, G.event), source = "offline";
+  // 兩位 AI 依序上場：網民大軍先留言，公關裁判長再讀稿子與留言下判決；各自失敗時只有該部分改用離線
+  let judge = offlineJudge(text, G.event), source = "offline", aiComments = null;
   if(!afk && aiReady()){
+    $("apiNote").textContent = "網民大軍湧入中……（等待期間不計時）";
+    aiComments = normalizeCrowd(await askAI("crowd", c));
+    if(G.state!==STATE_AUDITING) return;
     $("apiNote").textContent = "AI 裁判長閱卷中……（等待期間不計時）";
-    const j = await askAI(c);
-    if(j){ judge = normalizeLLM(j, judge); source = "llm"; $("apiNote").textContent=""; }
-    else $("apiNote").textContent = "線路忙碌，改由離線名醫看診。";
-  } else $("apiNote").textContent = aiReady() ? "" : (RELAY_URL ? "離線模式（公用 AI 線路休息中）" : "離線模式（未設定 API Key）");
+    const j = await askAI("judge", c, aiComments && aiComments.map(x=>x.comment));
+    if(j){ judge = normalizeJudge(j, judge); source = "llm"; }
+    $("apiNote").textContent = source==="llm" && aiComments ? "" : source==="llm" ? "網友線路忙碌，留言改用離線版。"
+      : aiComments ? "裁判線路忙碌，改由離線名醫判決。" : "線路忙碌，改由離線名醫看診。";
+  } else $("apiNote").textContent = aiReady() ? "" : (RELAY_BASE ? "離線模式（公用 AI 線路休息中）" : "離線模式（未設定 API Key）");
   if(G.state!==STATE_AUDITING) return;
   const r = scoreRound(judge, c);
   const ctx = {afk, garbled, timeout, flags:r.flags, tactics:c.tactics, helperUsed:c.helperUsed, ghost:judge.ghostwrite_suspect, dodged:r.D, S:r.S, H:r.H, judge, text};
@@ -1791,10 +1852,10 @@ async function publish(timeout=false){
     core_attitude: (source==="llm" && judge.core_attitude) || E.dx,
     expert_verdict: (source==="llm" && judge.expert_verdict) || E.verdict,
     headline: (source==="llm" && judge.headline) || E.headline(G.event.short),
-    comments: (source==="llm" && judge.comments) || pickComments(ctx, G.event)
+    comments: aiComments || pickComments(ctx, G.event)
   };
   if(!fin.critical_flaws.length) fin.critical_flaws = ["沒什麼大錯，但也沒什麼記憶點。"];
-  G.round = {c, judge, r, texts:fin, source};
+  G.round = {c, judge, r, texts:fin, source, crowdSource: aiComments ? "llm" : "offline"};
   runBattle();
 }
 function runBattle(){

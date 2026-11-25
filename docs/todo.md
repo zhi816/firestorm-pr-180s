@@ -49,3 +49,15 @@
 - **完成條件**：其他裝置不輸入 Key 即可取得 AI 判讀；金鑰不在任何受版控檔案與前端回應中；超過上限時前端自動切換離線模式；`lint_project.py` ERROR 0。
 - **關聯**：TD-006
 - **來源**：2026-11-25 使用者指示（希望別人不輸入金鑰即可使用使用者的 API，中繼伺服器排入之後的待辦），Claude Code by Anthropic。
+
+### TD-013 | open | app | 網民大軍與公關裁判長拆成兩個 AI 分頭處理
+- **內容**：依 [期末專案提案.md](proposal/期末專案提案.md) 第四章「雙 AI 智能體」，把目前「一次呼叫、同一支 System Prompt 同時扮演兩個角色」的判讀拆成兩個 AI 分頭處理：【AI 2：公關裁判長】只回傳判讀欄位（`inquiries`、`critical_flaws`、`core_attitude`、`red_flags`、`ghostwrite_suspect`、`sincerity`、`shirking`、`expert_verdict`、`headline`）；【AI 1：網民大軍】只回傳 6 則人設留言。兩支 System Prompt 分開撰寫。建議採序列協同：裁判先跑，再把裁判挑出的敗筆連同聲明稿交給網民大軍，讓留言針對漏洞吐槽；若實測總等待時間過長，改為兩者同時送出（留言不參考敗筆）。玩家自備 Key 的 `callLLMJudge()` 與 Worker 中繼（`TD-012`，`worker/`）兩條路徑都要改。失敗處理：裁判失敗則整局改走離線判讀；只有網民失敗時，留言改用離線留言庫，判讀仍採 AI 結果。同步改寫 [實作規格書.md](dev/實作規格書.md) 第四章第 2、5、6 節（JSON 拆成兩份格式、逾時各自計算），並確認與提案第四章架構圖說法一致。
+- **完成條件**：有 AI 可用時每次送審發出兩次請求，且留言會呼應裁判挑出的敗筆；兩次呼叫分別模擬失敗時遊戲都能順利通關；等待期間倒數暫停；以真實線路實測總等待時間並寫回實作規格書；`lint_project.py` ERROR 0、`verify_app.js` 雙端 FAIL 0。
+- **關聯**：TD-006、TD-012、TD-014
+- **來源**：2026-11-25 使用者指示（盤點 AI 用途與提案對照後，要求兩個 AI 分頭處理，不再由單一呼叫同時扮演兩角），Claude Code by Anthropic。
+
+### TD-014 | open | app | 公關裁判長改為先挑錯再打分（JSON 欄位順序對齊兩階段思維鏈）
+- **內容**：[期末專案提案.md](proposal/期末專案提案.md) 第四章第 2 節規定裁判的兩階段思維鏈是「質化漏洞挑錯，再客觀量化評估」，但目前 `index.html` 之 `SYSTEM_PROMPT` 要求的 JSON 欄位順序是 `inquiries`、`sincerity`、`shirking`、`red_flags` 在前，`core_attitude`、`critical_flaws`、`expert_verdict` 在後。模型依欄位順序逐字生成，等於先給分數才找理由。改為先寫逐題判讀與敗筆、紅旗、態度診斷，最後才寫 `sincerity`、`shirking`，並在 Prompt 明寫「分數必須依據前面列出的敗筆」。同步修改 [實作規格書.md](dev/實作規格書.md) 第四章第 2 節 JSON 範例與第 5 節說明，並執行 `node worker/build.mjs` 重新產生 Worker 的 `prompt-data.js`。若 `TD-013` 先完成，則套用於拆分後的裁判 Prompt。
+- **完成條件**：前端與 Worker 使用同一份新順序的 Prompt，規格書範例順序一致；確認 `normalizeLLM()` 與 Worker 的欄位檢查不受順序影響；`lint_project.py` ERROR 0。
+- **關聯**：TD-006、TD-013
+- **來源**：2026-11-25 使用者指示（盤點 AI 用途與提案對照後列為待辦），Claude Code by Anthropic。

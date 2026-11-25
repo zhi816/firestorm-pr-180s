@@ -262,3 +262,9 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：依使用者實機截圖與需求（「結算／裁決頁看不到留言，希望像 YouTube 一樣在下方直接看到全部網民留言」），調整 `index.html`：（1）手機版（`<=760px`）進入裁決頁 `data-view="verdict"` 時直接顯示 `#feedPn`（「炎串 · 留言區」與全部 6 則留言卡片 `.cm`）於 `#verdictPn` 下方，取消高度上限與內部捲軸改隨頁面自然往下捲動，並加上 `overflow-x: hidden` 避免滑入動畫造成橫向溢出；（2）隱藏空白時的 `#apiNote`（`min-height: 0; margin-top: 0; :empty { display: none }`），消除裁決面板與留言區之間多餘空隙；（3）移除冗餘之 `#toFeed`（「看留言」）按鈕，使裁決頁維持「緊急撤回」與「認了，看結局」兩顆主按鈕，也讓「炎串 · 留言區」標題與首則留言於 390×844 螢幕初見即可露出一角提示可往下捲動（同時修正電腦版點擊「看留言」會切離裁決頁且無鈕可返回的問題）。同步更新 [DESIGN.md](../DESIGN.md) 第三章第 2 項、[美術設計規格書.md](art/美術設計規格書.md) 第九章第 2 節與 [實作規格書.md](dev/實作規格書.md) 第六章。以無頭 Chrome 驗證：`verify_app.js` 桌面（1360×900）與手機（390×844）皆 `FAIL 0, WARN 0`；手機端實跑寫稿→公審→裁決頁（6 則留言皆完整顯示、橫向溢出 0px）→撤回改寫→結局全流程通過且畫面截圖確認無誤。
+
+
+## [2026-11-25 17:20] feat | 網民與裁判改為雙模型分工並支援 reasoning_effort 自動控制 | #LLM串接
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：依使用者拍板，針對 `TD-013` 拆分後 `deepseek/deepseek-v4.1-flash-fast` 預設長推理耗盡 2000 token 的問題，於 `worker/src/index.js` 與 `index.html` 實作雙模型分工與低延遲推理檔位控制：（1）預設改為網民 `Qwen/Qwen3.7-Flash`、裁判 `xiaomi/mimo-v2.6-flash`（皆為 Command Code 目錄之 `individual-go` 低價非強制推理模型），設定頁下拉選單預設為 `auto`（自動分工）並保留 7 個候選單一模型；（2）建立 `MODEL_EFFORT` 對照表，僅對支援且須壓低思考的模型帶入 `reasoning_effort`（DeepSeek V4.1 / Hy4 設 `"off"`、Qwen3.8 / GLM-5.3 設 `"low"`），非推理模型不帶該欄以避免上游報錯；（3）Worker 新增 `CROWD_MODEL`、`JUDGE_MODEL`、`CROWD_REASONING_EFFORT`、`JUDGE_REASONING_EFFORT`、`REASONING_EFFORT` 環境變數支援，於 `diag` 與紀錄補上實際模型與檔位，並將 `UPSTREAM_TIMEOUT_MS` 由暫時量測值 45000ms 還原為 11000ms。同步更新 [實作規格書.md](dev/實作規格書.md)、[中繼伺服器部署說明.md](dev/中繼伺服器部署說明.md) 與 [todo.md](todo.md) 之 `TD-013` 進度（待 Worker 部署後實測線上耗時）。驗證：`node worker/build.mjs --check` 同步；Worker 模擬 5 項雙模型與覆蓋案例全過；無頭 Chrome 執行 `verify_app.js` 桌面（1360×900）與手機（390×844）皆 `FAIL 0, WARN 0`，設定頁與 `callLLM` 模擬送出參數正確；`lint_project.py` ERROR 0。

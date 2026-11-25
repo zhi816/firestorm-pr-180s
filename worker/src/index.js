@@ -8,22 +8,34 @@
 // - 聲明稿上限 500 字，超過直接拒絕。
 //
 // 環境變數（Cloudflare 後台 Settings > Variables and Secrets）：
-//   COMMAND_CODE_API_KEY  必填，類型選 Secret
-//   IP_HOURLY_LIMIT       選填，每 IP 每小時 AI 呼叫上限，預設 60（每局送審 2 次）
-//   DAILY_LIMIT           選填，全站每日 AI 呼叫上限，預設 600
-//   MODEL                 選填，預設 deepseek/deepseek-v4.1-flash-fast
-//   ALLOWED_ORIGINS       選填，允許呼叫的網頁來源，逗號分隔，預設 https://zhi816.github.io
+//   COMMAND_CODE_API_KEY    必填，類型選 Secret
+//   IP_HOURLY_LIMIT         選填，每 IP 每小時 AI 呼叫上限，預設 60（每局送審 2 次）
+//   DAILY_LIMIT             選填，全站每日 AI 呼叫上限，預設 600
+//   CROWD_MODEL             選填，網民大軍模型，預設 Qwen/Qwen3.7-Flash
+//   JUDGE_MODEL             選填，公關裁判長模型，預設 xiaomi/mimo-v2.6-flash
+//   MODEL                   選填，同時覆蓋兩位角色的模型（優先度低於 CROWD_MODEL / JUDGE_MODEL）
+//   CROWD_REASONING_EFFORT  選填，網民大軍推理檔位（如 off / low / omit）
+//   JUDGE_REASONING_EFFORT  選填，公關裁判長推理檔位（如 off / low / omit）
+//   REASONING_EFFORT        選填，同時覆蓋兩位角色的推理檔位
+//   ALLOWED_ORIGINS         選填，允許呼叫的網頁來源，逗號分隔，預設 https://zhi816.github.io
 import { DurableObject } from "cloudflare:workers";
 import { CHARACTERS, EVENTS, findTactic, CROWD_PROMPT, JUDGE_PROMPT, crowdPrompt, judgePrompt } from "./prompt-data.js";
 
 const UPSTREAM = "https://api.commandcode.ai/provider/v1/chat/completions";
-const DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash-fast";
-// 與 index.html 的 AI_KINDS 一致：網民要有創意，裁判要穩定
+// 與 index.html 的 DEFAULT_MODELS / AI_KINDS / MODEL_EFFORT 一致：網民重網感與速度，裁判重穩定結構
 const KINDS = {
-  crowd: { system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
-  judge: { system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7 }
+  crowd: { model: "Qwen/Qwen3.7-Flash", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
+  judge: { model: "xiaomi/mimo-v2.6-flash", system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7 }
 };
-const UPSTREAM_TIMEOUT_MS = 45000;   // 暫時放寬以量測新 Prompt 的生成量（前端仍為 12 秒逾時），量測後改回 11000
+const MODEL_EFFORT = {
+  "deepseek/deepseek-v4.1-flash-fast": "off",
+  "deepseek/deepseek-v4.1-flash": "off",
+  "deepseek/deepseek-v4-flash-fast": "low",
+  "tencent/hy4-flash": "off",
+  "Qwen/Qwen3.8-Flash": "low",
+  "z-ai/glm-5.3-flash": "low"
+};
+const UPSTREAM_TIMEOUT_MS = 11000;   // 前端整體逾時 12 秒，這裡留 1 秒餘裕
 const STATEMENT_MAX = 500;           // 與 index.html 聲明稿輸入框 maxlength 一致
 const COMMENT_MAX = 80;              // 網民留言每則上限（與前端 normalizeCrowd() 一致）
 const BODY_MAX = 8192;
@@ -193,27 +205,47 @@ function sanitizeJudge(j) {
 const SANITIZE = { crowd: sanitizeCrowd, judge: sanitizeJudge };
 
 /* ==================== 呼叫 Command Code ==================== */
+function resolveModelConfig(env, kind) {
+  const modelKey = kind === "crowd" ? "CROWD_MODEL" : "JUDGE_MODEL";
+  const effortKey = kind === "crowd" ? "CROWD_REASONING_EFFORT" : "JUDGE_REASONING_EFFORT";
+  const model = (env[modelKey] || env.MODEL || KINDS[kind].model).trim();
+  const rawEffort = env[effortKey] !== undefined ? env[effortKey] : env.REASONING_EFFORT;
+  let effort = null;
+  if (rawEffort !== undefined) {
+    const trimmed = String(rawEffort).trim();
+    if (trimmed && trimmed !== "omit") effort = trimmed;
+  } else {
+    effort = MODEL_EFFORT[model] || null;
+  }
+  return { model, effort };
+}
+
 async function callUpstream(env, kind, c) {
   const k = KINDS[kind];
+  const { model, effort } = resolveModelConfig(env, kind);
+  const payload = {
+    model,
+    temperature: k.temperature,
+    max_tokens: k.max_tokens,
+    messages: [{ role: "system", content: k.system }, { role: "user", content: k.user(c) }]
+  };
+  if (effort) payload.reasoning_effort = effort;
   const res = await fetch(env.UPSTREAM_URL || UPSTREAM, {
     method: "POST",
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     headers: { "Authorization": "Bearer " + env.COMMAND_CODE_API_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: env.MODEL || DEFAULT_MODEL,
-      temperature: k.temperature,
-      max_tokens: k.max_tokens,
-      messages: [{ role: "system", content: k.system }, { role: "user", content: k.user(c) }]
-    })
+    body: JSON.stringify(payload)
   });
-  if (!res.ok) return { error: "upstream_http", status: res.status };
+  if (!res.ok) return { error: "upstream_http", status: res.status, diag: { model, reasoning_effort: effort } };
   const data = await res.json();
   const choice = (data && data.choices && data.choices[0]) || {};
   const msg = choice.message || {};
   let raw = String(msg.content || "");
-  // 診斷資訊只含結束原因、長度與 token 用量，不含任何模型輸出或聲明稿內容
+  // 診斷資訊只含模型、結束原因、長度與 token 用量，不含任何模型輸出或聲明稿內容
   const u = (data && data.usage) || {};
   const diag = {
+    model,
+    reasoning_effort: effort,
     finish_reason: choice.finish_reason || null,
     content_chars: raw.length,
     reasoning_chars: String(msg.reasoning_content || msg.reasoning || "").length,

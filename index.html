@@ -1185,11 +1185,29 @@ const G = {
   state:STATE_TITLE, char:null, event:null, tactics:new Set(), sec:180, tick:null, timers:[],
   revised:false, helperUsed:false, round:null, first:null, fans:0, flame:0, trust:0, shown:0, source:"offline"
 };
-const MODELS = ["deepseek/deepseek-v4.1-flash-fast","z-ai/glm-5.3-flash","google/gemini-3.8-flash"];
+const MODELS = [
+  {id:"auto", label:"自動分工（網民 Qwen3.7 / 裁判 MiMo-V2.6）"},
+  {id:"Qwen/Qwen3.7-Flash", label:"Qwen/Qwen3.7-Flash"},
+  {id:"xiaomi/mimo-v2.6-flash", label:"xiaomi/mimo-v2.6-flash"},
+  {id:"tencent/hy4-flash", label:"tencent/hy4-flash"},
+  {id:"Qwen/Qwen3.8-Flash", label:"Qwen/Qwen3.8-Flash"},
+  {id:"deepseek/deepseek-v4.1-flash-fast", label:"deepseek/deepseek-v4.1-flash-fast"},
+  {id:"z-ai/glm-5.3-flash", label:"z-ai/glm-5.3-flash"},
+  {id:"google/gemini-3.8-flash", label:"google/gemini-3.8-flash"}
+];
+const DEFAULT_MODELS = {crowd:"Qwen/Qwen3.7-Flash", judge:"xiaomi/mimo-v2.6-flash"};
+const MODEL_EFFORT = {
+  "deepseek/deepseek-v4.1-flash-fast":"off",
+  "deepseek/deepseek-v4.1-flash":"off",
+  "deepseek/deepseek-v4-flash-fast":"low",
+  "tencent/hy4-flash":"off",
+  "Qwen/Qwen3.8-Flash":"low",
+  "z-ai/glm-5.3-flash":"low"
+};
 /* 公用 AI 線路：Cloudflare Worker 中繼伺服器（worker/，見 docs/dev/實作規格書.md 第七章），金鑰存在伺服器端，玩家免輸入。端點 /crowd、/judge、/health；留空字串＝停用 */
 const RELAY_BASE = "https://firestorm-relay.eddy08160.workers.dev";
 const relay = {state:"unknown", pausedUntil:0};   // state：unknown（尚未探測）／ok／off（未部署或未設金鑰）
-const settings = Object.assign({key:"", model:MODELS[0], sound:null}, store.get("fpr_settings", {}));
+const settings = Object.assign({key:"", model:"auto", sound:null}, store.get("fpr_settings", {}));
 Sound.on = settings.sound===null ? true : settings.sound; // 2026-11-25 使用者決定：電腦與手機皆預設開啟
 
 function setState(s){
@@ -1742,13 +1760,17 @@ const AI_KINDS = {
 async function callLLM(kind, c, crowd){
   if(!settings.key) throw new Error("no-key");
   const k = AI_KINDS[kind];
+  const model = settings.model && settings.model!=="auto" ? settings.model : DEFAULT_MODELS[kind];
+  const effort = MODEL_EFFORT[model] || null;
+  const payload = {model, temperature:k.temperature, max_tokens:k.max_tokens,
+    messages:[{role:"system",content:k.system},{role:"user",content:k.user(c,crowd)}]};
+  if(effort) payload.reasoning_effort = effort;
   const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
   try{
     const res = await fetch("https://api.commandcode.ai/provider/v1/chat/completions", {
       method:"POST", signal:ctrl.signal,
       headers:{"Authorization":"Bearer "+settings.key, "Content-Type":"application/json"},
-      body: JSON.stringify({model:settings.model, temperature:k.temperature, max_tokens:k.max_tokens,
-        messages:[{role:"system",content:k.system},{role:"user",content:k.user(c,crowd)}]})
+      body: JSON.stringify(payload)
     });
     if(!res.ok) throw new Error("http-"+res.status);
     const data = await res.json();
@@ -2008,7 +2030,9 @@ function showEnding(){
 
 /* ==================== 設定 ==================== */
 function openSettings(){
-  $("setKey").value = settings.key; $("setModel").value = settings.model; $("setSound").checked = Sound.on;
+  $("setKey").value = settings.key;
+  $("setModel").value = MODELS.some(m=>m.id===settings.model) ? settings.model : "auto";
+  $("setSound").checked = Sound.on;
   $("settings").showModal();
 }
 function saveSettings(){
@@ -2056,7 +2080,7 @@ function tryFullscreen(){
 /* ==================== 啟動 ==================== */
 function boot(){
   draw($("logoFlame").getContext("2d"), FLAME, {k:K,K:K,o:"#ff4d5e",y:"#ff8a1f",w:"#ffe08a"},0,0);
-  $("setModel").innerHTML = MODELS.map(m=>`<option value="${m}">${m}</option>`).join("");
+  $("setModel").innerHTML = MODELS.map(m=>`<option value="${m.id}">${m.label}</option>`).join("");
   document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>onTab(b.dataset.v));
   $("startBtn").onclick = ()=>{ tryFullscreen(); Sound.unlock(); Sound.click(); renderSelect(); setState(STATE_SELECT); };
   $("helpBtn").onclick = ()=>setView("help");

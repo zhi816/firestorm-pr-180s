@@ -8,6 +8,8 @@
 
 期末專題作業。純前端單一網頁，部署在 GitHub Pages。
 
+**線上遊玩：<https://zhi816.github.io/firestorm-pr-180s/>**（電腦與手機皆可，免安裝；未設定 API Key 時以離線模式完整遊玩）
+
 ---
 
 ## 遊戲流程
@@ -82,7 +84,8 @@ firestorm-pr-180s/
 - [ ] 離線判讀與計分公式（對應 `TD-011`）
 - [ ] 串接 Command Code API（對應 `TD-006`），中繼伺服器（對應 `TD-012`）
 - [ ] Canvas 新聞圖卡與音效（對應 `TD-007`）
-- [ ] 手機實機測試與 GitHub Pages 部署、Demo 影片（對應 `TD-008`、`TD-009`）
+- [x] GitHub Pages 部署（只發布 `index.html`）
+- [ ] 手機實機測試、全流程驗收與 Demo 影片（對應 `TD-008`、`TD-009`）
 
 ## 授權與素材出處
 

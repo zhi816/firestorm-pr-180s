@@ -167,3 +167,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：依使用者決定比照 Epoch-Kairos，新增 `.github/workflows/pages.yml`：`main` 上 `index.html` 或本流程檔變動時（或手動觸發）只把 `index.html` 打包上傳 GitHub Pages，文件、樣張與日後的 `worker/` 不上站，供手機實機測試（`TD-008`）。更新 `AGENTS.md` 架構樹與 `TD-009` 進度；待使用者將 Pages Source 設為 GitHub Actions。
+
+## [2026-11-25 12:12] update | README 加入線上遊玩網址 | #測試驗證
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：使用者已將 Pages Source 設為 GitHub Actions 並完成首次部署，確認 <https://zhi816.github.io/firestorm-pr-180s/> 回應 200、頁面標題正確。`README.md` 開頭加入線上遊玩網址，進度清單拆出「GitHub Pages 部署」並勾選；更新 `TD-009` 進度（尚缺手機實機驗收與 Demo 影片）。

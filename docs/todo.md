@@ -28,7 +28,7 @@
 ### TD-009 | open | deploy | 準備 GitHub Pages 部署、全流程驗收與期末 Demo 檢核
 - **內容**：確認單檔 `index.html` 可直接在 GitHub Pages 根目錄正常運行（無相對路徑失效、Cubic 11 子集內嵌可離線顯示、離線模式正常）；Pages 以 `.github/workflows/pages.yml` 只發布 `index.html`（2026-11-25 使用者決定，比照 Epoch-Kairos）；更新 [README.md](../README.md) 線上遊玩網址與進度勾選；完成桌面與手機全流程驗收以備錄製 1～3 分鐘 Demo 影片與期末報告。
 - **完成條件**：GitHub Pages 線上可玩、無控制台錯誤、`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK。
-- **進度**：2026-11-25 已新增 `.github/workflows/pages.yml`；待使用者於倉庫 Settings -> Pages 將 Source 設為 GitHub Actions 後確認首次部署。Claude Code by Anthropic。
+- **進度**：2026-11-25 已新增 `.github/workflows/pages.yml`；使用者已將 Pages Source 設為 GitHub Actions 並完成首次部署，<https://zhi816.github.io/firestorm-pr-180s/> 回應 200，README 已加線上網址；尚缺手機實機驗收與 Demo 影片。Claude Code by Anthropic。
 - **關聯**：TD-006、TD-007、TD-008
 - **來源**：[README.md](../README.md) 目前進度與 [期末專案提案.md](proposal/期末專案提案.md) 第六章；2026-11-25 建檔，Antigravity by Google DeepMind。
 

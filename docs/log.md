@@ -202,3 +202,13 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
 - **具體變更**：使用者希望手機開啟時更像 App、不要瀏覽器工具列。因 iOS Safari 不允許網頁隱藏網址列，`index.html` 改走「加入主畫面」：新增 `apple-mobile-web-app-capable`、`black-translucent` 狀態列等設定，執行時以 canvas 畫火焰圖示（180、192、512）並以 data URL 產生 manifest（`display: standalone`，維持單檔部署）；封面與選角頁頂底加入安全區域邊距，關閉下拉回彈與雙擊縮放。手機封面首次顯示可關閉的教學提示（記於 `localStorage`），iOS 教「分享 → 加入主畫面」，Android 等支援 Fullscreen API 的瀏覽器按「開始挑戰」自動切全螢幕。同步更新 DESIGN.md 第三章第 2 項。以無頭 Chrome（iPhone UA、390 寬）確認提示、圖示與 manifest 正確產生且無 JS 錯誤；主畫面圖示與全螢幕實際效果待使用者實機確認。
+
+## [2026-11-25 15:32] fix | 重做 Cubic 11 子集修正新聞卡混用字型 | #UI介面
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：修正 `FP-002`。經使用者同意自官方倉庫取得 Cubic 11 完整字型（不進版控），新增 `.agents/skills/game-build-pipeline/scripts/font_subset.py`，以 `index.html` 實際用字重做內嵌子集（664 字增為 1288 字，woff2 約 53KB，`index.html` 約增加 32KB）；依使用者選擇只嵌用到的字。以內建瀏覽器實測頁面 1144 個中文字全部由 Cubic 11 繪製，新聞卡與診斷書不再混用字型，`verify_app.js` 桌面與手機 FAIL 0。game-build-pipeline S3 新增缺字檢查步驟，美術設計規格書第四章補充子集產生方式，`TD-007` 進度移除缺字項。
+
+## [2026-11-25 15:31] config | Pages 發布拆成打包與發布兩個工作並加失敗重試 | #測試驗證
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：未標註（Claude Code 執行環境規定不得將模型識別碼寫入倉庫）
+- **具體變更**：使用者看到 GitHub 提交列表出現紅叉。查證三次失敗（f77d46c、4411a3c、31a9e10）都是 `deploy-pages` 回報「No artifacts named github-pages」，但該次執行的成品其實已上傳（API 查得到），同一設定另有三次成功，判定是同一工作內成品尚未登錄完成的時間差；推送本身正常。因 31a9e10 發布失敗，線上版停在 5592e57，缺背景音樂與手機 App 模式。`.github/workflows/pages.yml` 改為 `build`（打包上傳）與 `deploy`（`needs: build`）兩個工作，發布失敗時等待 30 秒重試一次；本次修改流程檔即觸發重新發布，補上前述兩項功能。與 `TD-009` 部署相關。

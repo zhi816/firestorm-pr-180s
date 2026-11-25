@@ -47,6 +47,11 @@ description: >-
 2. **雙端版面檢查（有瀏覽器工具或本機實測時必跑）**：
    於根目錄啟動本機伺服器 `python3 -m http.server 8781 --bind 127.0.0.1`，開啟 `http://127.0.0.1:8781/index.html`，執行 `.agents/skills/game-build-pipeline/scripts/verify_app.js` 驗證 `1360x900`（桌面）與 `390x844`（手機）皆 `FAIL 0`。
    若實測發現版面或功能缺陷且本回合未立即修完，必須登記為 `FP-NNN` 於 `docs/issues.md`。
+3. **像素字缺字檢查（新增或改寫中文文字時必跑）**：
+   ```bash
+   <venv>/bin/python .agents/skills/game-build-pipeline/scripts/font_subset.py --check
+   ```
+   缺中文字時以 `--font <Cubic_11 完整字型> --apply` 重做內嵌子集。需要 fontTools 與 brotli（裝在暫存虛擬環境，不進版控），完整字型自官方倉庫 `ACh-K/Cubic-11` 之 `fonts/web/Cubic_11.woff2` 取得，用法見腳本開頭說明。
 
 ### S4｜文件同步與原子交付
 1. 若完成整項 `TD-NNN`，直接從 `docs/todo.md` 刪除該條目；若僅完成部分進度，於該條目追加 `- **進度**：...` 並改回 `open`。

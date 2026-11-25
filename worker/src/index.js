@@ -24,7 +24,7 @@ import { CHARACTERS, EVENTS, findTactic, CROWD_PROMPT, JUDGE_PROMPT, crowdPrompt
 const UPSTREAM = "https://api.commandcode.ai/provider/v1/chat/completions";
 // 與 index.html 的 DEFAULT_MODELS / AI_KINDS / MODEL_EFFORT 一致：網民重網感與速度，裁判重穩定結構
 const KINDS = {
-  crowd: { model: "Qwen/Qwen3.7-Flash", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
+  crowd: { model: "deepseek/deepseek-v4.1-flash-fast", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
   judge: { model: "xiaomi/mimo-v2.6-flash", system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7 }
 };
 const MODEL_EFFORT = {

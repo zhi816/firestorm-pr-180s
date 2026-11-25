@@ -1735,8 +1735,8 @@ function judgePrompt(c, crowd){
 
 /* 每位 AI 的呼叫參數：網民要有創意，裁判要穩定 */
 const AI_KINDS = {
-  crowd:{system:CROWD_PROMPT, user:(c)=>crowdPrompt(c), max_tokens:900, temperature:.9},
-  judge:{system:JUDGE_PROMPT, user:(c,crowd)=>judgePrompt(c,crowd), max_tokens:1100, temperature:.7}
+  crowd:{system:CROWD_PROMPT, user:(c)=>crowdPrompt(c), max_tokens:2000, temperature:.9},
+  judge:{system:JUDGE_PROMPT, user:(c,crowd)=>judgePrompt(c,crowd), max_tokens:2000, temperature:.7}
 };
 /* 玩家自備 Key：從這個網頁直接呼叫 Command Code */
 async function callLLM(kind, c, crowd){

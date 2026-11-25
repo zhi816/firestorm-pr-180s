@@ -20,8 +20,8 @@ const UPSTREAM = "https://api.commandcode.ai/provider/v1/chat/completions";
 const DEFAULT_MODEL = "deepseek/deepseek-v4.1-flash-fast";
 // 與 index.html 的 AI_KINDS 一致：網民要有創意，裁判要穩定
 const KINDS = {
-  crowd: { system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 900, temperature: 0.9 },
-  judge: { system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 1100, temperature: 0.7 }
+  crowd: { system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
+  judge: { system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7 }
 };
 const UPSTREAM_TIMEOUT_MS = 11000;   // 前端整體逾時 12 秒，這裡留 1 秒餘裕
 const STATEMENT_MAX = 500;           // 與 index.html 聲明稿輸入框 maxlength 一致
@@ -208,14 +208,26 @@ async function callUpstream(env, kind, c) {
   });
   if (!res.ok) return { error: "upstream_http", status: res.status };
   const data = await res.json();
-  let raw = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || "";
-  raw = String(raw).replace(/```json/gi, "").replace(/```/g, "").trim();
+  const choice = (data && data.choices && data.choices[0]) || {};
+  const msg = choice.message || {};
+  let raw = String(msg.content || "");
+  // 診斷資訊只含結束原因、長度與 token 用量，不含任何模型輸出或聲明稿內容
+  const u = (data && data.usage) || {};
+  const diag = {
+    finish_reason: choice.finish_reason || null,
+    content_chars: raw.length,
+    reasoning_chars: String(msg.reasoning_content || msg.reasoning || "").length,
+    prompt_tokens: u.prompt_tokens ?? null,
+    completion_tokens: u.completion_tokens ?? null,
+    reasoning_tokens: (u.completion_tokens_details && u.completion_tokens_details.reasoning_tokens) ?? null
+  };
+  raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
   const m = raw.match(/\{[\s\S]*\}/);
-  if (!m) return { error: "upstream_no_json" };
+  if (!m) return { error: "upstream_no_json", diag };
   let parsed;
-  try { parsed = JSON.parse(m[0]); } catch (e) { return { error: "upstream_bad_json" }; }
+  try { parsed = JSON.parse(m[0]); } catch (e) { return { error: "upstream_bad_json", diag }; }
   const result = SANITIZE[kind](parsed);
-  return result ? { result } : { error: "upstream_bad_json" };
+  return result ? { result, diag } : { error: "upstream_bad_json", diag };
 }
 
 /* ==================== 入口 ==================== */
@@ -240,9 +252,9 @@ async function handleAI(kind, request, env, origin) {
   try { r = await callUpstream(env, kind, v.c); }
   catch (e) { r = { error: e && e.name === "TimeoutError" ? "upstream_timeout" : "upstream_fetch" }; }
   // 只記錄結果代碼與耗時，不記錄聲明稿內容
-  console.log(JSON.stringify({ event: kind, ok: !r.error, error: r.error, status: r.status, ms: Date.now() - started }));
-  if (r.error) return json(r.error === "upstream_timeout" ? 504 : 502, { error: r.error }, origin);
-  return json(200, { [kind]: r.result }, origin);
+  console.log(JSON.stringify({ event: kind, ok: !r.error, error: r.error, status: r.status, ms: Date.now() - started, ...(r.diag || {}) }));
+  if (r.error) return json(r.error === "upstream_timeout" ? 504 : 502, { error: r.error, diag: r.diag || null }, origin);
+  return json(200, { [kind]: r.result, diag: r.diag }, origin);
 }
 
 export default {

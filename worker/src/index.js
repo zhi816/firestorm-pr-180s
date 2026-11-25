@@ -11,8 +11,8 @@
 //   COMMAND_CODE_API_KEY    必填，類型選 Secret
 //   IP_HOURLY_LIMIT         選填，每 IP 每小時 AI 呼叫上限，預設 60（每局送審 2 次）
 //   DAILY_LIMIT             選填，全站每日 AI 呼叫上限，預設 600
-//   CROWD_MODEL             選填，網民大軍模型，預設 Qwen/Qwen3.7-Flash
-//   JUDGE_MODEL             選填，公關裁判長模型，預設 xiaomi/mimo-v2.6-flash
+//   CROWD_MODEL             選填，網民大軍模型，預設 deepseek/deepseek-v4.1-flash-fast
+//   JUDGE_MODEL             選填，公關裁判長模型，預設 deepseek/deepseek-v4.1-flash-fast
 //   MODEL                   選填，同時覆蓋兩位角色的模型（優先度低於 CROWD_MODEL / JUDGE_MODEL）
 //   CROWD_REASONING_EFFORT  選填，網民大軍推理檔位（如 off / low / omit）
 //   JUDGE_REASONING_EFFORT  選填，公關裁判長推理檔位（如 off / low / omit）
@@ -22,10 +22,10 @@ import { DurableObject } from "cloudflare:workers";
 import { CHARACTERS, EVENTS, findTactic, CROWD_PROMPT, JUDGE_PROMPT, crowdPrompt, judgePrompt } from "./prompt-data.js";
 
 const UPSTREAM = "https://api.commandcode.ai/provider/v1/chat/completions";
-// 與 index.html 的 DEFAULT_MODELS / AI_KINDS / MODEL_EFFORT 一致：網民重網感與速度，裁判重穩定結構
+// 與 index.html 的 DEFAULT_MODELS / AI_KINDS / MODEL_EFFORT 一致；網民有創意、裁判要穩定，且支援各自覆蓋模型
 const KINDS = {
-  crowd: { model: "tencent/hy4-flash", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
-  judge: { model: "deepseek/deepseek-v4.1-flash-fast", system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7 }
+  crowd: { model: "deepseek/deepseek-v4.1-flash-fast", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9, timeoutMs: 12000 },
+  judge: { model: "deepseek/deepseek-v4.1-flash-fast", system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7, timeoutMs: 24000 }
 };
 const MODEL_EFFORT = {
   "deepseek/deepseek-v4.1-flash-fast": "off",
@@ -35,7 +35,6 @@ const MODEL_EFFORT = {
   "Qwen/Qwen3.8-Flash": "low",
   "z-ai/glm-5.3-flash": "low"
 };
-const UPSTREAM_TIMEOUT_MS = 30000;   // 診斷 Qwen3.7 / MiMo 實際耗時與 token 用量，確認後再調回合理上限
 const STATEMENT_MAX = 500;           // 與 index.html 聲明稿輸入框 maxlength 一致
 const COMMENT_MAX = 80;              // 網民留言每則上限（與前端 normalizeCrowd() 一致）
 const BODY_MAX = 8192;
@@ -232,7 +231,7 @@ async function callUpstream(env, kind, c) {
   if (effort) payload.reasoning_effort = effort;
   const res = await fetch(env.UPSTREAM_URL || UPSTREAM, {
     method: "POST",
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(k.timeoutMs),
     headers: { "Authorization": "Bearer " + env.COMMAND_CODE_API_KEY, "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });

@@ -258,6 +258,9 @@ body:is([data-view="title"],[data-view="select"],[data-view="help"]) #timer{visi
 .prev b{color:var(--red);font-weight:400}
 .prev ol{margin:6px 0 0;padding-left:20px;font-family:var(--long);font-size:13px;line-height:1.6}
 .api-note{color:var(--cyan);min-height:18px;margin-top:8px}
+#auditAct{display:none;margin-top:12px}
+body[data-phase="STATE_AUDITING"] #auditAct{display:block}
+#toVerdict{width:100%}
 .dots{color:var(--dim);animation:pulse .8s steps(2) infinite}
 
 /* 裁決頁 */
@@ -322,9 +325,15 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   #bossPn,#qPn,.monitor,#dlg{display:none !important}
   body[data-view="crisis"] #bossPn,body[data-view="crisis"] #qPn{display:block !important}
   body[data-view="draft"] .monitor,body[data-view="audit"] .monitor{display:block !important}
+  body[data-view="audit"] .stage{display:contents}
+  body[data-view="audit"] .monitor{order:1}
+  body[data-view="audit"] #apiNote{order:2}
+  body[data-view="audit"] #dlg{order:3}
+  body[data-view="audit"] #auditAct{order:4;margin-top:0}
+  body[data-view="audit"] #feedPn{order:5}
   body[data-view="audit"] #dlg,body[data-view="verdict"] #dlg{display:grid !important}
-  body[data-view="verdict"] #feedPn{display:block;overflow-x:hidden}
-  body[data-view="verdict"] #feedPn .feed{max-height:none;overflow:visible;padding:0}
+  body:is([data-view="audit"],[data-view="verdict"]) #feedPn{display:block;overflow-x:hidden}
+  body:is([data-view="audit"],[data-view="verdict"]) #feedPn .feed{max-height:none;overflow:visible;padding:0}
   #apiNote{min-height:0;margin-top:0}
   #apiNote:empty{display:none}
   body[data-view="result"] .stage,body[data-view="result"] #dlg{display:none !important}
@@ -522,6 +531,9 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
             <div class="react"><span>讚 1.2萬</span><span class="bad" id="dislike">倒讚 12萬</span></div></div>
         </div>
       </section>
+      <div id="auditAct">
+        <button class="btn primary" id="toVerdict" type="button" disabled>等待網友留言……</button>
+      </div>
       <section class="pn" id="cmdPn">
         <div class="prev" id="prevFlaws" hidden><b>上次被挑出的毛病（照著改）</b><ol id="prevFlawList"></ol></div>
         <div class="pn-title">指令：影片形式（單選）</div>
@@ -1182,20 +1194,19 @@ const STATE_TITLE="STATE_TITLE", STATE_SELECT="STATE_SELECT", STATE_CRISIS="STAT
       STATE_AUDITING="STATE_AUDITING", STATE_VERDICT="STATE_VERDICT", STATE_REVISE="STATE_REVISE", STATE_RESULT="STATE_RESULT";
 const VIEW_OF = {STATE_TITLE:"title",STATE_SELECT:"select",STATE_CRISIS:"crisis",STATE_PR_DRAFT:"draft",STATE_AUDITING:"audit",STATE_VERDICT:"verdict",STATE_REVISE:"draft",STATE_RESULT:"result"};
 const G = {
-  state:STATE_TITLE, char:null, event:null, tactics:new Set(), sec:180, tick:null, timers:[],
+  state:STATE_TITLE, char:null, event:null, tactics:new Set(), sec:180, tick:null, timers:[], runId:0,
   revised:false, helperUsed:false, round:null, first:null, fans:0, flame:0, trust:0, shown:0, source:"offline"
 };
 const MODELS = [
-  {id:"auto", label:"自動分工（網民 Qwen3.7 / 裁判 MiMo-V2.6）"},
-  {id:"Qwen/Qwen3.7-Flash", label:"Qwen/Qwen3.7-Flash"},
-  {id:"xiaomi/mimo-v2.6-flash", label:"xiaomi/mimo-v2.6-flash"},
-  {id:"tencent/hy4-flash", label:"tencent/hy4-flash"},
-  {id:"Qwen/Qwen3.8-Flash", label:"Qwen/Qwen3.8-Flash"},
+  {id:"auto", label:"自動預設（DeepSeek V4.1 關推理極速）"},
   {id:"deepseek/deepseek-v4.1-flash-fast", label:"deepseek/deepseek-v4.1-flash-fast"},
+  {id:"xiaomi/mimo-v2.6-flash", label:"xiaomi/mimo-v2.6-flash"},
+  {id:"Qwen/Qwen3.8-Flash", label:"Qwen/Qwen3.8-Flash"},
+  {id:"tencent/hy4-flash", label:"tencent/hy4-flash"},
   {id:"z-ai/glm-5.3-flash", label:"z-ai/glm-5.3-flash"},
   {id:"google/gemini-3.8-flash", label:"google/gemini-3.8-flash"}
 ];
-const DEFAULT_MODELS = {crowd:"Qwen/Qwen3.7-Flash", judge:"xiaomi/mimo-v2.6-flash"};
+const DEFAULT_MODELS = {crowd:"deepseek/deepseek-v4.1-flash-fast", judge:"deepseek/deepseek-v4.1-flash-fast"};
 const MODEL_EFFORT = {
   "deepseek/deepseek-v4.1-flash-fast":"off",
   "deepseek/deepseek-v4.1-flash":"off",
@@ -1263,7 +1274,7 @@ function pickEvent(charKey){
   return ev;
 }
 function startRound(charKey){
-  clearTimers(); stopClock();
+  clearTimers(); stopClock(); G.runId++;
   const ch = CHARACTERS[charKey];
   Object.assign(G, {char:charKey, event:pickEvent(charKey), tactics:new Set(), sec:180, revised:false, helperUsed:false,
     round:null, first:null, fans:ch.fans, flame:0, trust:ch.trust, shown:0, source:"offline"});
@@ -1765,7 +1776,7 @@ async function callLLM(kind, c, crowd){
   const payload = {model, temperature:k.temperature, max_tokens:k.max_tokens,
     messages:[{role:"system",content:k.system},{role:"user",content:k.user(c,crowd)}]};
   if(effort) payload.reasoning_effort = effort;
-  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), kind==="judge"?25000:13000);
   try{
     const res = await fetch("https://api.commandcode.ai/provider/v1/chat/completions", {
       method:"POST", signal:ctrl.signal,
@@ -1782,7 +1793,7 @@ async function callLLM(kind, c, crowd){
 }
 /* 公用線路：只送角色、事件、策略、聲明稿（裁判另附網民留言），Prompt 由 Worker 組裝 */
 async function callRelay(kind, c, crowd){
-  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), 12000);
+  const ctrl = new AbortController(); const to = setTimeout(()=>ctrl.abort(), kind==="judge"?25000:13000);
   try{
     const body = {character:c.char, event_id:c.event.id, tactics:c.tactics, statement:c.text, revise_of:c.prevFlaws||null};
     if(kind==="judge") body.crowd = crowd || null;
@@ -1838,38 +1849,12 @@ function normalizeJudge(j, off){
 }
 
 /* ==================== 發布與公審 ==================== */
-async function publish(timeout=false){
-  const text = $("stmt").value.trim();
-  const garbled = !timeout && isGibberish(text);
-  const afk = timeout || text.length===0 || garbled;
-  stopClock(); clearTimers();
-  if(document.activeElement) document.activeElement.blur();
-  const c = {char:G.char, event:G.event, tactics:[...G.tactics], text, afk, garbled, timeout, helperUsed:G.helperUsed, revised:G.revised,
-             prevFlaws: G.revised && G.first ? G.first.texts.critical_flaws : null};
-  setState(STATE_AUDITING);
-  $("feed").innerHTML=""; $("chat").innerHTML=""; $("chatAllN").textContent="0"; G.shown=0;
-  if(G.revised){ G.fans = CHARACTERS[G.char].fans - 100000; G.flame = G.event.initial_flame + 10; }
-  else { G.fans = CHARACTERS[G.char].fans; G.flame = G.event.initial_flame; }
-  G.trust = CHARACTERS[G.char].trust; setStats(0);
-  renderVideo(); renderSub();
-  dlg(`${esc(CHARACTERS[G.char].name)} 發布了聲明！……網友正在輸入中 <span class="dots">▮▮▮</span>`);
-  $("verdictBtns").hidden = true;
-
-  // 兩位 AI 依序上場：網民大軍先留言，公關裁判長再讀稿子與留言下判決；各自失敗時只有該部分改用離線
-  let judge = offlineJudge(text, G.event), source = "offline", aiComments = null;
-  if(!afk && aiReady()){
-    $("apiNote").textContent = "網民大軍湧入中……（等待期間不計時）";
-    aiComments = normalizeCrowd(await askAI("crowd", c));
-    if(G.state!==STATE_AUDITING) return;
-    $("apiNote").textContent = "AI 裁判長閱卷中……（等待期間不計時）";
-    const j = await askAI("judge", c, aiComments && aiComments.map(x=>x.comment));
-    if(j){ judge = normalizeJudge(j, judge); source = "llm"; }
-    $("apiNote").textContent = source==="llm" && aiComments ? "" : source==="llm" ? "網友線路忙碌，留言改用離線版。"
-      : aiComments ? "裁判線路忙碌，改由離線名醫判決。" : "線路忙碌，改由離線名醫看診。";
-  } else $("apiNote").textContent = aiReady() ? "" : (RELAY_BASE ? "離線模式（公用 AI 線路休息中）" : "離線模式（未設定 API Key）");
-  if(G.state!==STATE_AUDITING) return;
+function buildRoundData(c, offJudge, aiComments, j){
+  const source = j ? "llm" : "offline";
+  const judge = j ? normalizeJudge(j, offJudge) : offJudge;
   const r = scoreRound(judge, c);
-  const ctx = {afk, garbled, timeout, flags:r.flags, tactics:c.tactics, helperUsed:c.helperUsed, ghost:judge.ghostwrite_suspect, dodged:r.D, S:r.S, H:r.H, judge, text};
+  const ctx = {afk:c.afk, garbled:c.garbled, timeout:c.timeout, flags:r.flags, tactics:c.tactics, helperUsed:c.helperUsed,
+    ghost:judge.ghostwrite_suspect, dodged:r.D, S:r.S, H:r.H, judge, text:c.text};
   const texts = offlineTexts(ctx, G.event, r.ending);
   const E = ENDINGS[r.ending];
   const fin = {
@@ -1880,24 +1865,109 @@ async function publish(timeout=false){
     comments: aiComments || pickComments(ctx, G.event)
   };
   if(!fin.critical_flaws.length) fin.critical_flaws = ["沒什麼大錯，但也沒什麼記憶點。"];
-  G.round = {c, judge, r, texts:fin, source, crowdSource: aiComments ? "llm" : "offline"};
-  runBattle();
+  return {c, judge, r, texts:fin, source, crowdSource: aiComments ? "llm" : "offline"};
 }
-function runBattle(){
-  const {r, texts} = G.round, ch=CHARACTERS[G.char];
-  const lossTotal = Math.max(0, r.loss - (G.round.c.revised?100000:0));
-  const flameGain = r.flame - G.flame;
+function refreshAuditState(runId){
+  if(G.runId!==runId || G.state!==STATE_AUDITING || !G.round) return;
+  const btn = $("toVerdict");
+  if(!G.round.judgeDone){
+    btn.disabled = true;
+    btn.textContent = "裁判長閱卷中……";
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = G.round.battleDone ? "查看裁判長判決 ▶" : "裁判已完成，跳過動畫看判決 ▶";
+  if(G.round.battleDone){
+    const {r} = G.round;
+    G.fans = Math.max(0, CHARACTERS[G.char].fans - r.loss); G.flame = r.flame; G.trust = r.trust; setStats(0);
+    avatar($("dlgAv"), G.char);
+    dlg("網友公審結束！裁判長判決已完成，點下方按鈕看結果！");
+  }
+}
+async function publish(timeout=false){
+  const text = $("stmt").value.trim();
+  const garbled = !timeout && isGibberish(text);
+  const afk = timeout || text.length===0 || garbled;
+  stopClock(); clearTimers();
+  const runId = ++G.runId;
+  if(document.activeElement) document.activeElement.blur();
+  const c = {char:G.char, event:G.event, tactics:[...G.tactics], text, afk, garbled, timeout, helperUsed:G.helperUsed, revised:G.revised,
+             prevFlaws: G.revised && G.first ? G.first.texts.critical_flaws : null};
+  setState(STATE_AUDITING);
+  $("feed").innerHTML=""; $("chat").innerHTML=""; $("chatAllN").textContent="0"; $("cmCount").textContent="0 則"; G.shown=0;
+  if(G.revised){ G.fans = CHARACTERS[G.char].fans - 100000; G.flame = G.event.initial_flame + 10; }
+  else { G.fans = CHARACTERS[G.char].fans; G.flame = G.event.initial_flame; }
+  G.trust = CHARACTERS[G.char].trust; setStats(0);
+  renderVideo(); renderSub();
+  dlg(`${esc(CHARACTERS[G.char].name)} 發布了聲明！……網友正在輸入中 <span class="dots">▮▮▮</span>`);
+  $("verdictBtns").hidden = true;
+  $("toVerdict").disabled = true; $("toVerdict").textContent = afk ? "網友湧入中……" : "等待網友留言……";
+
+  // 1. 先呼叫網民大軍，一拿到留言就立刻在公審頁開播留言區
+  const offJudge = offlineJudge(text, G.event);
+  let aiComments = null;
+  const canAI = !afk && aiReady();
+  if(canAI){
+    $("apiNote").textContent = "網民大軍湧入中……（等待期間不計時）";
+    aiComments = normalizeCrowd(await askAI("crowd", c));
+    if(G.runId!==runId || G.state!==STATE_AUDITING) return;
+  } else $("apiNote").textContent = aiReady() ? "" : (RELAY_BASE ? "離線模式（公用 AI 線路休息中）" : "離線模式（未設定 API Key）");
+
+  const prov = buildRoundData(c, offJudge, aiComments, null);
+  G.round = { ...prov, judgeDone: !canAI, battleDone: false };
+  refreshAuditState(runId);
+
+  // 2. 背景同時呼叫公關裁判長，讓玩家邊看下方留言邊等判決完成後自行點按鈕跳轉
+  if(canAI){
+    $("apiNote").textContent = aiComments
+      ? "AI 裁判長在背景閱卷中……可先看下方網友留言"
+      : "網友線路忙碌，留言改用離線版；AI 裁判長閱卷中……";
+    askAI("judge", c, aiComments && aiComments.map(x=>x.comment)).then(j=>{
+      if(G.runId!==runId || G.state!==STATE_AUDITING) return;
+      const fin = buildRoundData(c, offJudge, aiComments, j);
+      fin.texts.comments = prov.texts.comments;
+      G.round = { ...fin, judgeDone: true, battleDone: G.round.battleDone };
+      const okJ = fin.source==="llm";
+      $("apiNote").textContent = okJ && aiComments ? "" : okJ ? "網友線路忙碌，留言改用離線版。"
+        : aiComments ? "裁判線路忙碌，改由離線名醫判決。" : "線路忙碌，改由離線名醫看診。";
+      refreshAuditState(runId);
+    });
+  }
+  runBattle(runId);
+}
+function commentDmg(r, isRevised, persona){
+  const lossTotal = Math.max(0, r.loss - (isRevised ? 100000 : 0));
+  return Math.round(lossTotal * PERSONAS_INFO[persona].w / 1000) * 1000;
+}
+function runBattle(runId){
+  const comments = G.round.texts.comments;
   const step = reduceMotion() ? 300 : 1100;
-  texts.comments.forEach((cm,i)=>G.timers.push(setTimeout(()=>{
+  comments.forEach((cm,i)=>G.timers.push(setTimeout(()=>{
+    if(G.runId!==runId || G.state!==STATE_AUDITING || !G.round) return;
+    const {r, c} = G.round;
     const info = PERSONAS_INFO[cm.persona];
-    const dmg = Math.round(lossTotal*info.w/1000)*1000;
+    const dmg = commentDmg(r, c.revised, cm.persona);
+    const flameGain = r.flame - (c.revised ? G.event.initial_flame + 10 : G.event.initial_flame);
     G.fans = Math.max(0, G.fans - dmg); G.flame += flameGain/6; G.shown++;
     addComment(cm, dmg); setStats(dmg);
     avatar($("dlgAv"), cm.persona);
     dlg(`${info.tag} 使出了 <em>【${info.skill}】</em>！${dmg>=100000?"效果絕佳！":dmg>0?"命中！":"反而被群嘲了……"} ${dmg>0?`<span class="hurt">粉絲 −${fmt(dmg)}</span>`:""}`);
     Sound.hit(); if(dmg>=100000){ Sound.boom(); shake(); }
   }, 600 + i*step)));
-  G.timers.push(setTimeout(showVerdict, 600 + texts.comments.length*step + 400));
+  G.timers.push(setTimeout(()=>{
+    if(G.runId!==runId || G.state!==STATE_AUDITING || !G.round) return;
+    G.round.battleDone = true;
+    refreshAuditState(runId);
+  }, 600 + comments.length*step + 400));
+}
+function flushRemainingComments(){
+  if(!G.round) return;
+  const {texts, r, c} = G.round;
+  while(G.shown < texts.comments.length){
+    const cm = texts.comments[G.shown++];
+    addComment(cm, commentDmg(r, c.revised, cm.persona));
+  }
+  setStats(0);
 }
 function addComment(cm, dmg){
   const info=PERSONAS_INFO[cm.persona], per=PERSONAS[cm.persona];
@@ -2091,7 +2161,14 @@ function boot(){
   $("helper").onclick = ()=>{ G.helperUsed=true; $("stmt").value=HELPER_TEXT; renderSub(); Sound.click(); dlg(`官腔小幫手登場！套話已填好……<span class="hurt">（使用後誠意 −15）</span>`); };
   $("withdraw").onclick = revise;
   $("accept").onclick = acceptVerdict;
-  const openSheet = ()=>{ document.body.classList.add("sheet"); $("feed").scrollTop=0; $("feedClose").focus(); };
+  $("toVerdict").onclick = ()=>{
+    if(G.state!==STATE_AUDITING || !G.round || !G.round.judgeDone) return;
+    clearTimers(); G.round.battleDone = true; flushRemainingComments(); Sound.click(); showVerdict();
+  };
+  const openSheet = ()=>{
+    if(getComputedStyle($("feedPn")).display!=="none"){ $("feedPn").scrollIntoView({behavior:reduceMotion()?"auto":"smooth"}); return; }
+    document.body.classList.add("sheet"); $("feed").scrollTop=0; $("feedClose").focus();
+  };
   $("chatAll").onclick = openSheet; $("chat").onclick = openSheet;
   $("feedClose").onclick = ()=>{ document.body.classList.remove("sheet"); $("chatAll").focus(); };
   $("resClose").onclick = ()=>setView("audit");

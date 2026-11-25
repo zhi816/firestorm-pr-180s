@@ -23,7 +23,7 @@ const KINDS = {
   crowd: { system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9 },
   judge: { system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7 }
 };
-const UPSTREAM_TIMEOUT_MS = 11000;   // 前端整體逾時 12 秒，這裡留 1 秒餘裕
+const UPSTREAM_TIMEOUT_MS = 45000;   // 暫時放寬以量測新 Prompt 的生成量（前端仍為 12 秒逾時），量測後改回 11000
 const STATEMENT_MAX = 500;           // 與 index.html 聲明稿輸入框 maxlength 一致
 const COMMENT_MAX = 80;              // 網民留言每則上限（與前端 normalizeCrowd() 一致）
 const BODY_MAX = 8192;

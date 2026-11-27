@@ -295,3 +295,8 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：依使用者回饋將 [index.html](../index.html) 底部對話框 `#dlg` 改為頂部浮動自動消失 RPG 提示窗（`position: fixed`，桌面版懸浮頂部中央 `top: 16px`、手機版懸浮頂部 `#hud` 下方並保留頭像與打字專注自動隱藏），不佔靜態版面高度、約 2.6～4.5 秒自動淡出且可點擊關閉（切換至封面／選角／說明／結局時自動清除）；將公審結束提示由「點下方按鈕看結果」改為「網友公審結束，裁判長判決已出爐！」，消除與 `#auditAct` 按鈕的重複與方向錯誤。同步更新 [DESIGN.md](../DESIGN.md) 第二、三章與 [美術設計規格書.md](art/美術設計規格書.md) 第五、九章。驗證：瀏覽器代理實測 `1360×900`（`crisis` 884.88px、`draft`/`audit`/`verdict` 皆 812.88px <= 900px）、`1920×950` 與手機 `390×844` 全數 0 錯誤、0 橫向溢出，頂部懸浮定位、開戰／公審／裁決自動淡出與打字隱藏皆正常；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。
+
+## [2026-11-27 22:43] feat | 將「接招！開始寫聲明」按鈕移至中欄道歉影片正下方 | #UI介面
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：依使用者回饋將 [index.html](../index.html) 的 `#crisisCta`（「接招！開始寫聲明」）由 `.col.left` 移至 `.col.center`（`.monitor` 正下方），於 `>=1280px` 套用 `max-width: 780px; width: 100%; justify-self: center` 與道歉影片對齊且單行顯示，改善左欄過擠與折行；手機版（`<=760px`）透過 `.left` / `.center` 皆為 `display: contents` 維持既有順序不變。同步更新 [美術設計規格書.md](art/美術設計規格書.md) 第九章。驗證：瀏覽器代理實測 `1360×900`（`812.88px` 高）、`1920×950`（`790.78px` 高）與手機 `390×844` 皆 0 錯誤、0 橫向溢出，且 `#crisisCta` 單行對齊 `.monitor` 下方並可正常進入寫稿頁；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。

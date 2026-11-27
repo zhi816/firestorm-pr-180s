@@ -285,3 +285,8 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：依使用者提供的電腦寬螢幕實機截圖，將兩張現況截圖存檔至 [桌面版排版截圖_開場.jpg](assets/桌面版排版截圖_開場.jpg) 與 [桌面版排版截圖_裁決.jpg](assets/桌面版排版截圖_裁決.jpg)，同步收錄於 [index.md](index.md)，並於 [todo.md](todo.md) 新增 `TD-017`（優化電腦寬螢幕三欄排版與畫面空間配置，暫不改動 `index.html`）。
+
+## [2026-11-27 22:19] feat | 優化電腦寬螢幕滿版三欄排版與中欄並排配置（TD-017） | #UI介面
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：完成 `TD-017` 並刪除 [todo.md](todo.md) 對應條目。依使用者確認方案調整 [index.html](../index.html) 桌面版（`>1080px`）版面：（1）`.wrap` 與 `.res-in` 改為 `max-width: 96vw` 滿版延展，三欄採彈性比例（`1081~1279px` 為 `23:50:27`，`>=1280px` 為 `21:54:25`）；（2）`>=1280px` 在 `draft` 與 `verdict` 階段中欄改為左（`0.88fr` 道歉影片）右（`1.12fr` 指令聲明稿／裁判長判決）並排對齊頂部、微調按鈕字級與 `1280~1539px` 隱藏 `.long-lbl` 避免折行，並限制結局 `#newsImg` 最大高度；（3）`1081~1279px` 裁決頁將 `#verdictPn` 置頂於影片上方，`showVerdict()` 改用 `scrollIntoView({block:"nearest"})`；（4）`.feed` 採 `clamp(360px, calc(100vh - 300px), 660px)` 限高捲動，桌面版未開播（`:empty`）顯示等待提示。同步更新 [DESIGN.md](../DESIGN.md) 第三章與 [美術設計規格書.md](art/美術設計規格書.md) 第九章。驗證：本機瀏覽器代理於 `1920×950`（`crisis` / `draft` / `verdict` / `result` 皆 `<=950px` 一屏看完）、`1360×900` 與手機 `390×844` 執行對等檢查皆 0 錯誤、0 橫向溢出、0 元件裁切；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。

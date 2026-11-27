@@ -138,17 +138,23 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--line);color
 .cm .foot .dmg{color:var(--red)}
 @keyframes slide{from{transform:translateX(24px);opacity:0}}
 
-/* dialogue */
-.dlg{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;min-height:92px;padding:12px 16px}
-.dlg canvas{width:72px;height:72px;box-shadow:0 0 0 4px var(--line)}
-.dlg p{margin:0;font-size:24px;line-height:1.5}
+/* dialogue (floating auto-dismiss toast at top) */
+.dlg{display:none;position:fixed;left:50%;top:16px;transform:translateX(-50%);z-index:28;
+  width:min(680px,calc(100vw - 32px));grid-template-columns:auto 1fr;gap:14px;align-items:center;
+  min-height:0;padding:10px 36px 10px 14px;cursor:pointer;background:rgba(24,34,76,.96);
+  box-shadow:0 -4px 0 0 var(--line),0 4px 0 0 var(--line),-4px 0 0 0 var(--line),4px 0 0 0 var(--line),
+             inset 4px 4px 0 0 var(--hi),inset -4px -4px 0 0 var(--lo),0 12px 28px rgba(4,7,26,.78)}
+.dlg.show{display:grid;animation:toast-in .2s steps(3) both}
+.dlg canvas{width:56px;height:56px;box-shadow:0 0 0 4px var(--line)}
+.dlg p{margin:0;font-size:20px;line-height:1.45}
 .dlg p em{font-style:normal;color:var(--gold)}
 .dlg p .hurt{color:var(--red)}
-.dlg .more{position:absolute;right:20px;bottom:12px;width:12px;height:8px;background:var(--gold);clip-path:polygon(0 0,100% 0,50% 100%);animation:pulse .8s steps(2) infinite}
+.dlg .more{position:absolute;right:16px;bottom:10px;width:12px;height:8px;background:var(--gold);clip-path:polygon(0 0,100% 0,50% 100%);animation:pulse .8s steps(2) infinite}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,-14px)}to{opacity:1;transform:translate(-50%,0)}}
 
 .shake{animation:shake .3s steps(3)}
 @keyframes shake{25%{transform:translate(-6px,2px)}50%{transform:translate(6px,-2px)}75%{transform:translate(-3px,0)}}
-@media (prefers-reduced-motion:reduce){.shake,.cm,.timer.hot b,.dlg .more{animation:none}}
+@media (prefers-reduced-motion:reduce){.shake,.cm,.timer.hot b,.dlg .more,.dlg.show{animation:none}}
 
 @media (min-width:1081px){
   .feed:empty::after{content:"尚未開播，發布聲明後網友留言將湧入此區……";display:block;padding:28px 14px;text-align:center;color:var(--dim);font-family:var(--long);font-size:13px;line-height:1.7;border:2px dashed var(--hi);background:var(--lo)}
@@ -235,15 +241,15 @@ a.btn{display:inline-block;text-decoration:none;text-align:center}
 [hidden]{display:none !important}
 
 /* 畫面切換：依 body[data-view] 顯示 */
-#titlePn,#selectPn,#helpPn,.stage,#dlg,#verdictPn,#cmdPn,#crisisCta{display:none}
+#titlePn,#selectPn,#helpPn,.stage,#verdictPn,#cmdPn,#crisisCta{display:none}
 body[data-view="title"] #titlePn{display:grid}
 body[data-view="select"] #selectPn{display:block}
 body[data-view="help"] #helpPn{display:block}
 body:is([data-view="crisis"],[data-view="draft"],[data-view="audit"],[data-view="verdict"],[data-view="result"]) .stage{display:grid}
-body:is([data-view="crisis"],[data-view="draft"],[data-view="audit"],[data-view="verdict"],[data-view="result"]) #dlg{display:grid}
 body[data-view="crisis"] #crisisCta{display:block}
 body[data-view="draft"] #cmdPn{display:block}
 body[data-view="verdict"] #verdictPn{display:block}
+body[data-view="result"] #dlg{display:none}
 body:is([data-view="title"],[data-view="select"],[data-view="help"]) #timer{visibility:hidden}
 
 /* 封面 */
@@ -346,25 +352,22 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   .wrap{gap:16px}
   .stage{grid-template-columns:minmax(0,1fr);gap:16px}
   .stage .left,.stage .center{display:contents}
-  #bossPn,#qPn,.monitor,#dlg{display:none !important}
+  #bossPn,#qPn,.monitor{display:none !important}
   body[data-view="crisis"] #bossPn,body[data-view="crisis"] #qPn{display:block !important}
   body[data-view="draft"] .monitor,body[data-view="audit"] .monitor{display:block !important}
   body:is([data-view="audit"],[data-view="verdict"]) .stage{display:contents}
   body[data-view="audit"] .monitor{order:1}
   body[data-view="audit"] #apiNote{order:2}
-  body[data-view="audit"] #dlg{order:3}
-  body[data-view="audit"] #auditAct{order:4;margin-top:0}
-  body[data-view="audit"] #feedPn{order:5}
-  body[data-view="verdict"] #dlg{order:1}
-  body[data-view="verdict"] #verdictPn{order:2}
-  body[data-view="verdict"] #apiNote{order:3}
-  body[data-view="verdict"] #feedPn{order:4}
-  body[data-view="audit"] #dlg,body[data-view="verdict"] #dlg{display:grid !important}
+  body[data-view="audit"] #auditAct{order:3;margin-top:0}
+  body[data-view="audit"] #feedPn{order:4}
+  body[data-view="verdict"] #verdictPn{order:1}
+  body[data-view="verdict"] #apiNote{order:2}
+  body[data-view="verdict"] #feedPn{order:3}
   body:is([data-view="audit"],[data-view="verdict"]) #feedPn{display:block;overflow-x:hidden}
   body:is([data-view="audit"],[data-view="verdict"]) #feedPn .feed{max-height:none;overflow:visible;padding:0}
   #apiNote{min-height:0;margin-top:0}
   #apiNote:empty{display:none}
-  body[data-view="result"] .stage,body[data-view="result"] #dlg{display:none !important}
+  body[data-view="result"] .stage,body[data-view="result"] #dlg,body.typing #dlg{display:none !important}
   #crisisCta{width:100%}
   .title-main h2{font-size:24px}
   #charGrid{gap:10px}
@@ -418,9 +421,9 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
   body.sheet .feed-head span{margin-left:auto}
   .vinfo h2{font-size:18px}
   .chan canvas{width:24px;height:24px}
-  .dlg{grid-template-columns:1fr;min-height:0;padding:14px 16px 20px}
-  .dlg canvas{display:none}
-  .dlg p{font-size:18px}
+  .dlg{top:calc(70px + env(safe-area-inset-top,0px));bottom:auto;width:calc(100vw - 24px);max-width:440px;gap:10px;padding:10px 28px 10px 12px}
+  .dlg canvas{width:40px;height:40px}
+  .dlg p{font-size:15px;line-height:1.4}
   .sub{font-size:12px;bottom:6%}
   .res-head h2{font-size:24px}
   #resClose{display:none}
@@ -595,7 +598,7 @@ dialog .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
     </section>
   </div>
 
-  <section class="pn dlg" id="dlg">
+  <section class="pn dlg" id="dlg" role="status" aria-live="polite" title="點擊關閉">
     <canvas id="dlgAv" width="12" height="12"></canvas>
     <p id="dlgText"></p>
     <span class="more"></span>
@@ -1252,10 +1255,12 @@ Sound.on = settings.sound===null ? true : settings.sound; // 2026-11-25 使用�
 function setState(s){
   G.state = s;
   document.body.dataset.phase = s;
+  if(s===STATE_TITLE||s===STATE_SELECT||s===STATE_RESULT) hideDlg();
   setView(VIEW_OF[s]);
   Music.play(MUSIC_OF[s]);
 }
 function setView(v){
+  if(v==="help") hideDlg();
   document.body.dataset.view = v; document.body.classList.remove("sheet");
   const tabView = v==="verdict" ? "audit" : v;
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.v===tabView));
@@ -1600,7 +1605,15 @@ function setStats(lastDmg){
   $("cmCount").textContent = G.shown + " 則"; $("chatAllN").textContent = G.shown;
   $("dislike").textContent = "倒讚 " + (12+G.shown*7) + "萬";
 }
-function dlg(html){ $("dlgText").innerHTML = html; }
+let dlgTimer = 0;
+function hideDlg(){ clearTimeout(dlgTimer); dlgTimer = 0; $("dlg").classList.remove("show"); }
+function dlg(html, ms=3600){
+  clearTimeout(dlgTimer);
+  $("dlgText").innerHTML = html;
+  const el = $("dlg");
+  if(!el.classList.contains("show")) el.classList.add("show");
+  if(ms>0) dlgTimer = setTimeout(hideDlg, ms);
+}
 
 /* ==================== 離線判讀（docs/dev/實作規格書.md 第五章） ==================== */
 const has = (t, words) => words.some(w => t.includes(w));
@@ -1909,7 +1922,7 @@ function refreshAuditState(runId){
     const {r} = G.round;
     G.fans = Math.max(0, CHARACTERS[G.char].fans - r.loss); G.flame = r.flame; G.trust = r.trust; setStats(0);
     avatar($("dlgAv"), G.char);
-    dlg("網友公審結束！裁判長判決已完成，點下方按鈕看結果！");
+    dlg("網友公審結束，裁判長判決已出爐！", 2600);
   }
 }
 async function publish(timeout=false){
@@ -1927,7 +1940,7 @@ async function publish(timeout=false){
   else { G.fans = CHARACTERS[G.char].fans; G.flame = G.event.initial_flame; }
   G.trust = CHARACTERS[G.char].trust; setStats(0);
   renderVideo(); renderSub();
-  dlg(`${esc(CHARACTERS[G.char].name)} 發布了聲明！……網友正在輸入中 <span class="dots">▮▮▮</span>`);
+  dlg(`${esc(CHARACTERS[G.char].name)} 發布了聲明！……網友正在輸入中 <span class="dots">▮▮▮</span>`, 0);
   $("verdictBtns").hidden = true;
   $("toVerdict").disabled = true; $("toVerdict").textContent = afk ? "網友湧入中……" : "等待網友留言……";
 
@@ -2047,7 +2060,7 @@ function revise(){
   $("prevFlaws").hidden = false;
   $("prevFlawList").innerHTML = G.first.texts.critical_flaws.map(f=>`<li>${esc(f)}</li>`).join("");
   G.fans = CHARACTERS[G.char].fans - 100000; G.flame = G.event.initial_flame + 10; setStats(100000);
-  dlg(`影片已設為私人……但 <span class="hurt">截圖已經流出了</span>（炎上 +10、粉絲 −100,000）。照裁判挑出的毛病改完再發一次！`);
+  dlg(`影片已設為私人……但 <span class="hurt">截圖已經流出了</span>（炎上 +10、粉絲 −100,000）。照裁判挑出的毛病改完再發一次！`, 4500);
   setView("draft"); startClock();
   $("stmt").focus({preventScroll:true});
 }
@@ -2180,6 +2193,7 @@ function boot(){
   draw($("logoFlame").getContext("2d"), FLAME, {k:K,K:K,o:"#ff4d5e",y:"#ff8a1f",w:"#ffe08a"},0,0);
   $("setModel").innerHTML = MODELS.map(m=>`<option value="${m.id}">${m.label}</option>`).join("");
   document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>onTab(b.dataset.v));
+  $("dlg").onclick = hideDlg;
   $("startBtn").onclick = ()=>{ tryFullscreen(); Sound.unlock(); Sound.click(); renderSelect(); setState(STATE_SELECT); };
   $("helpBtn").onclick = ()=>setView("help");
   $("helpBack").onclick = ()=>setView(VIEW_OF[G.state]);

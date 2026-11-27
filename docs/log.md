@@ -290,3 +290,8 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：完成 `TD-017` 並刪除 [todo.md](todo.md) 對應條目。依使用者確認方案調整 [index.html](../index.html) 桌面版（`>1080px`）版面：（1）`.wrap` 與 `.res-in` 改為 `max-width: 96vw` 滿版延展，三欄採彈性比例（`1081~1279px` 為 `23:50:27`，`>=1280px` 為 `21:54:25`）；（2）`>=1280px` 在 `draft` 與 `verdict` 階段中欄改為左（`0.88fr` 道歉影片）右（`1.12fr` 指令聲明稿／裁判長判決）並排對齊頂部、微調按鈕字級與 `1280~1539px` 隱藏 `.long-lbl` 避免折行，並限制結局 `#newsImg` 最大高度；（3）`1081~1279px` 裁決頁將 `#verdictPn` 置頂於影片上方，`showVerdict()` 改用 `scrollIntoView({block:"nearest"})`；（4）`.feed` 採 `clamp(360px, calc(100vh - 300px), 660px)` 限高捲動，桌面版未開播（`:empty`）顯示等待提示。同步更新 [DESIGN.md](../DESIGN.md) 第三章與 [美術設計規格書.md](art/美術設計規格書.md) 第九章。驗證：本機瀏覽器代理於 `1920×950`（`crisis` / `draft` / `verdict` / `result` 皆 `<=950px` 一屏看完）、`1360×900` 與手機 `390×844` 執行對等檢查皆 0 錯誤、0 橫向溢出、0 元件裁切；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。
+
+## [2026-11-27 22:41] feat | 將 RPG 對話框改為頂部浮動自動消失提示窗並修正重複文案 | #UI介面
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：依使用者回饋將 [index.html](../index.html) 底部對話框 `#dlg` 改為頂部浮動自動消失 RPG 提示窗（`position: fixed`，桌面版懸浮頂部中央 `top: 16px`、手機版懸浮頂部 `#hud` 下方並保留頭像與打字專注自動隱藏），不佔靜態版面高度、約 2.6～4.5 秒自動淡出且可點擊關閉（切換至封面／選角／說明／結局時自動清除）；將公審結束提示由「點下方按鈕看結果」改為「網友公審結束，裁判長判決已出爐！」，消除與 `#auditAct` 按鈕的重複與方向錯誤。同步更新 [DESIGN.md](../DESIGN.md) 第二、三章與 [美術設計規格書.md](art/美術設計規格書.md) 第五、九章。驗證：瀏覽器代理實測 `1360×900`（`crisis` 884.88px、`draft`/`audit`/`verdict` 皆 812.88px <= 900px）、`1920×950` 與手機 `390×844` 全數 0 錯誤、0 橫向溢出，頂部懸浮定位、開戰／公審／裁決自動淡出與打字隱藏皆正常；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。

@@ -157,20 +157,25 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--line);color
 @media (prefers-reduced-motion:reduce){.shake,.cm,.timer.hot b,.dlg .more,.dlg.show{animation:none}}
 
 @media (min-width:1081px){
-  .feed:empty::after{content:"尚未開播，發布聲明後網友留言將湧入此區……";display:block;padding:28px 14px;text-align:center;color:var(--dim);font-family:var(--long);font-size:13px;line-height:1.7;border:2px dashed var(--hi);background:var(--lo)}
+  .feed:empty::after{content:"網友留言即將湧入此區……";display:block;padding:28px 14px;text-align:center;color:var(--dim);font-family:var(--long);font-size:13px;line-height:1.7;border:2px dashed var(--hi);background:var(--lo)}
   #apiNote:empty{display:none}
+  body:is([data-view="crisis"],[data-view="draft"]) #feedPn{display:none}
+  body:is([data-view="crisis"],[data-view="draft"]) .stage{grid-template-columns:minmax(250px,22fr) minmax(0,78fr)}
 }
 @media (min-width:1081px) and (max-width:1279px){
   body[data-view="verdict"] #verdictPn{order:-1}
 }
 @media (min-width:1280px){
-  .stage{grid-template-columns:minmax(260px,21fr) minmax(600px,54fr) minmax(290px,25fr)}
-  body:is([data-view="crisis"],[data-view="audit"]) .stage .center .monitor,
-  body:is([data-view="crisis"],[data-view="audit"]) #auditAct,
-  body[data-view="crisis"] #crisisCta{max-width:780px;width:100%;justify-self:center}
-  body:is([data-view="draft"],[data-view="verdict"]) .stage .center{grid-template-columns:minmax(0,.88fr) minmax(0,1.12fr);gap:16px;align-items:start}
+  .stage{grid-template-columns:minmax(250px,20fr) minmax(600px,56fr) minmax(290px,24fr)}
+  body:is([data-view="crisis"],[data-view="draft"]) .stage{grid-template-columns:minmax(260px,21fr) minmax(0,79fr)}
+  body[data-view="crisis"] .stage .center .monitor,
+  body[data-view="crisis"] #crisisCta{max-width:920px;width:100%;justify-self:center}
+  body[data-view="audit"] .stage .center .monitor,
+  body[data-view="audit"] #auditAct{max-width:860px;width:100%;justify-self:center}
+  body[data-view="draft"] .stage .center{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+  body[data-view="verdict"] .stage .center{grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:16px;align-items:start}
   body:is([data-view="draft"],[data-view="verdict"]) .stage .center #apiNote{grid-column:1/-1;margin-top:0}
-  body:is([data-view="draft"],[data-view="verdict"]) .monitor .vinfo h2{font-size:20px}
+  body[data-view="verdict"] .monitor .vinfo h2{font-size:20px}
   body:is([data-view="draft"],[data-view="verdict"]) .monitor .chan{gap:6px 10px}
   body:is([data-view="draft"],[data-view="verdict"]) .stage .center .btn{font-size:clamp(16px,1.25vw,22px);padding:12px 14px}
   body:is([data-view="draft"],[data-view="verdict"]) .stage .center .btn.ghost{font-size:clamp(14px,1.05vw,16px);padding:12px 14px}
@@ -178,7 +183,7 @@ textarea{width:100%;min-height:96px;resize:vertical;background:var(--line);color
   #verdictPn h3,#verdictPn .vq,#verdictPn .vflaws,#verdictPn .vsum{margin-bottom:10px}
   #newsImg{max-height:calc(100vh - 330px);width:auto;max-width:100%;margin:0 auto}
 }
-@media (min-width:1280px) and (max-width:1539px){
+@media (min-width:1280px) and (max-width:1399px){
   .long-lbl{display:none}
 }
 @media (max-width:1080px){

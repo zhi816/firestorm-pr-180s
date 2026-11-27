@@ -300,3 +300,8 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：依使用者回饋將 [index.html](../index.html) 的 `#crisisCta`（「接招！開始寫聲明」）由 `.col.left` 移至 `.col.center`（`.monitor` 正下方），於 `>=1280px` 套用 `max-width: 780px; width: 100%; justify-self: center` 與道歉影片對齊且單行顯示，改善左欄過擠與折行；手機版（`<=760px`）透過 `.left` / `.center` 皆為 `display: contents` 維持既有順序不變。同步更新 [美術設計規格書.md](art/美術設計規格書.md) 第九章。驗證：瀏覽器代理實測 `1360×900`（`812.88px` 高）、`1920×950`（`790.78px` 高）與手機 `390×844` 皆 0 錯誤、0 橫向溢出，且 `#crisisCta` 單行對齊 `.monitor` 下方並可正常進入寫稿頁；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。
+
+## [2026-11-27 22:47] feat | 開場與寫稿階段隱藏空白留言欄以放大主視覺道歉影片 | #UI介面
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：依使用者回饋調整 [index.html](../index.html) 桌面版（`>1080px`）空間分配：在尚未開播無留言的 `crisis` 與 `draft` 階段隱藏右欄 `#feedPn`，改採兩欄配置（`>=1280px` 為 `21fr : 79fr`、`1081~1279px` 為 `22fr : 78fr`），將原右欄空白空間全數釋放給主視覺道歉影片——`>=1280px` `crisis` 影片與 `#crisisCta` 放大至 `920px`、`draft` 中欄採 `1.15fr : 1fr` 並排大影片與 `#cmdPn`；進入 `audit` 與 `verdict` 後展開三欄（`20fr : 56fr : 24fr`），裁決頁採 `0.95fr : 1.05fr` 並排。同步更新 [DESIGN.md](../DESIGN.md) 第三章與 [美術設計規格書.md](art/美術設計規格書.md) 第九章。驗證：瀏覽器代理實測 `1920×950`（`draft` `.monitor` 由 `421px` 放大至 `759.70px`、`crisis` 放大至 `920px`，各階段皆 `<=863.44px` 高）、`1360×900`（`draft` `.monitor` 由 `293px` 放大至 `532.53px`，各階段皆 `<=839.19px` 高）與手機 `390×844` 全數 0 錯誤、0 橫向溢出；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。

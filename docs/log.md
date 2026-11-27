@@ -280,3 +280,8 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：依使用者手機實機截圖回饋，調整 `index.html` 手機版（`<=760px`）`data-view="verdict"` 版面順序：透過 `.stage { display: contents }` 與 `order` 排序，將 `#dlg`（「裁判長宣讀判決！倒數繼續跑，要認了，還是【緊急撤回】？」）置頂於 `#verdictPn`（裁判長判決面板）上方，`#feedPn`（炎串 · 留言區）維持在最下方，避免長留言區把判決提示推到頁尾。同步更新 [DESIGN.md](../DESIGN.md) 第三章第 2 項與 [美術設計規格書.md](art/美術設計規格書.md) 第九章第 2 節。驗證：無頭 Chrome `verify_app.js` 桌面（1360×900）與手機（390×844）`FAIL 0, WARN 0`，手機 `STATE_VERDICT` 元素座標依序為 `#dlg`（72px）→ `#verdictPn`（176px）→ `#feedPn`（710.8px）且橫向溢出 `0px`；`lint_project.py` ERROR 0。
+
+## [2026-11-27 12:43] update | 封存電腦版排版現況截圖並建立 TD-017 待辦 | #UI介面
+- **執行代理**：Antigravity by Google DeepMind
+- **模型版本**：Gemini 4 Hydrogen
+- **具體變更**：依使用者提供的電腦寬螢幕實機截圖，將兩張現況截圖存檔至 [桌面版排版截圖_開場.jpg](assets/桌面版排版截圖_開場.jpg) 與 [桌面版排版截圖_裁決.jpg](assets/桌面版排版截圖_裁決.jpg)，同步收錄於 [index.md](index.md)，並於 [todo.md](todo.md) 新增 `TD-017`（優化電腦寬螢幕三欄排版與畫面空間配置，暫不改動 `index.html`）。

@@ -49,6 +49,8 @@
 | [遊戲核心流程圖.png](assets/遊戲核心流程圖.png) | 四階段詳細流程與 Reflection 閉環 |
 | [遊戲流程圖_簡潔版.png](assets/遊戲流程圖_簡潔版.png) | 簡潔版流程圖 |
 | [AI技術架構與Reflection流程圖.png](assets/AI技術架構與Reflection流程圖.png) | 雙 AI 資料流與 Reflection 架構 |
+| [桌面版排版截圖_開場.jpg](assets/桌面版排版截圖_開場.jpg) | 2026-11-27 電腦寬螢幕開場畫面現況截圖（作為 `TD-017` 排版優化參考） |
+| [桌面版排版截圖_裁決.jpg](assets/桌面版排版截圖_裁決.jpg) | 2026-11-27 電腦寬螢幕裁決畫面現況截圖（作為 `TD-017` 排版優化參考） |
 
 ## 原始資料 `archive/`（只讀）
 

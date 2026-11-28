@@ -305,3 +305,8 @@
 - **執行代理**：Antigravity by Google DeepMind
 - **模型版本**：Gemini 4 Hydrogen
 - **具體變更**：依使用者回饋調整 [index.html](../index.html) 桌面版（`>1080px`）空間分配：在尚未開播無留言的 `crisis` 與 `draft` 階段隱藏右欄 `#feedPn`，改採兩欄配置（`>=1280px` 為 `21fr : 79fr`、`1081~1279px` 為 `22fr : 78fr`），將原右欄空白空間全數釋放給主視覺道歉影片——`>=1280px` `crisis` 影片與 `#crisisCta` 放大至 `920px`、`draft` 中欄採 `1.15fr : 1fr` 並排大影片與 `#cmdPn`；進入 `audit` 與 `verdict` 後展開三欄（`20fr : 56fr : 24fr`），裁決頁採 `0.95fr : 1.05fr` 並排。同步更新 [DESIGN.md](../DESIGN.md) 第三章與 [美術設計規格書.md](art/美術設計規格書.md) 第九章。驗證：瀏覽器代理實測 `1920×950`（`draft` `.monitor` 由 `421px` 放大至 `759.70px`、`crisis` 放大至 `920px`，各階段皆 `<=863.44px` 高）、`1360×900`（`draft` `.monitor` 由 `293px` 放大至 `532.53px`，各階段皆 `<=839.19px` 高）與手機 `390×844` 全數 0 錯誤、0 橫向溢出；`lint_project.py` ERROR 0、`pipeline_status.py` 全數 OK、`node worker/build.mjs --check` 同步。
+
+## [2026-11-28 16:52] feat | AI 預設模型暫時改走 Command Code 免費模型 | #AI串接
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：Claude Opus 5.5
+- **具體變更**：Command Code GOAT 月度額度已用 98%（12-11 重置），依使用者指示把兩位 AI 的預設模型暫時改成免費模型（各每天 1000 次、不扣 GOAT 額度）：網民大軍 `glyph-cluster:free`、公關裁判長 `flint-v1.0:free`。修改 [index.html](../index.html) 的 `DEFAULT_MODELS` 與玩家自備 Key 的模型選單（新增兩個免費模型，原有 DeepSeek 等模型保留可選），以及 [worker/src/index.js](../worker/src/index.js) 的 `KINDS` 預設模型；Cloudflare 後台的 `CROWD_MODEL`／`JUDGE_MODEL`／`MODEL` 變數仍可覆蓋。額度重置後可改回 `deepseek/deepseek-v4.1-flash-fast`。驗證：`cmd -p` 實測兩個免費模型皆可回覆；`node worker/build.mjs --check` 同步；公用線路實測結果見下一筆日誌。

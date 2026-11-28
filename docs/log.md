@@ -310,3 +310,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：Claude Opus 5.5
 - **具體變更**：Command Code GOAT 月度額度已用 98%（12-11 重置），依使用者指示把兩位 AI 的預設模型暫時改成免費模型（各每天 1000 次、不扣 GOAT 額度）：網民大軍 `glyph-cluster:free`、公關裁判長 `flint-v1.0:free`。修改 [index.html](../index.html) 的 `DEFAULT_MODELS` 與玩家自備 Key 的模型選單（新增兩個免費模型，原有 DeepSeek 等模型保留可選），以及 [worker/src/index.js](../worker/src/index.js) 的 `KINDS` 預設模型；Cloudflare 後台的 `CROWD_MODEL`／`JUDGE_MODEL`／`MODEL` 變數仍可覆蓋。額度重置後可改回 `deepseek/deepseek-v4.1-flash-fast`。驗證：`cmd -p` 實測兩個免費模型皆可回覆；`node worker/build.mjs --check` 同步；公用線路實測結果見下一筆日誌。
+
+## [2026-11-28 16:54] fix | 免費模型改用 Provider API 的完整模型 ID | #AI串接
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：Claude Opus 5.5
+- **具體變更**：上一筆部署後公用線路實測兩位 AI 皆回 `upstream_http`（502）：Provider API 的模型 ID 需帶廠商前綴，CLI 名稱不能直接用。依 `https://api.commandcode.ai/provider/v1/models` 線上清單改為 `stealth/glyph-cluster:free`（網民大軍）與 `recursive/flint-v1.0:free`（公關裁判長），同步修改 [index.html](../index.html) 與 [worker/src/index.js](../worker/src/index.js)。驗證：`node worker/build.mjs --check` 同步；公用線路實測見下一筆日誌。

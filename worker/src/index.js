@@ -11,8 +11,8 @@
 //   COMMAND_CODE_API_KEY    必填，類型選 Secret
 //   IP_HOURLY_LIMIT         選填，每 IP 每小時 AI 呼叫上限，預設 60（每局送審 2 次）
 //   DAILY_LIMIT             選填，全站每日 AI 呼叫上限，預設 600
-//   CROWD_MODEL             選填，網民大軍模型，預設 glyph-cluster:free
-//   JUDGE_MODEL             選填，公關裁判長模型，預設 flint-v1.0:free
+//   CROWD_MODEL             選填，網民大軍模型，預設 stealth/glyph-cluster:free
+//   JUDGE_MODEL             選填，公關裁判長模型，預設 recursive/flint-v1.0:free
 //   MODEL                   選填，同時覆蓋兩位角色的模型（優先度低於 CROWD_MODEL / JUDGE_MODEL）
 //   CROWD_REASONING_EFFORT  選填，網民大軍推理檔位（如 off / low / omit）
 //   JUDGE_REASONING_EFFORT  選填，公關裁判長推理檔位（如 off / low / omit）
@@ -24,8 +24,8 @@ import { CHARACTERS, EVENTS, findTactic, CROWD_PROMPT, JUDGE_PROMPT, crowdPrompt
 const UPSTREAM = "https://api.commandcode.ai/provider/v1/chat/completions";
 // 與 index.html 的 DEFAULT_MODELS / AI_KINDS / MODEL_EFFORT 一致；網民有創意、裁判要穩定，且支援各自覆蓋模型
 const KINDS = {
-  crowd: { model: "glyph-cluster:free", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9, timeoutMs: 12000 },
-  judge: { model: "flint-v1.0:free", system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7, timeoutMs: 24000 }
+  crowd: { model: "stealth/glyph-cluster:free", system: CROWD_PROMPT, user: c => crowdPrompt(c), max_tokens: 2000, temperature: 0.9, timeoutMs: 12000 },
+  judge: { model: "recursive/flint-v1.0:free", system: JUDGE_PROMPT, user: c => judgePrompt(c, c.crowd), max_tokens: 2000, temperature: 0.7, timeoutMs: 24000 }
 };
 const MODEL_EFFORT = {
   "deepseek/deepseek-v4.1-flash-fast": "off",

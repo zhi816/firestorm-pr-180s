@@ -315,3 +315,8 @@
 - **執行代理**：Claude Code by Anthropic
 - **模型版本**：Claude Opus 5.5
 - **具體變更**：上一筆部署後公用線路實測兩位 AI 皆回 `upstream_http`（502）：Provider API 的模型 ID 需帶廠商前綴，CLI 名稱不能直接用。依 `https://api.commandcode.ai/provider/v1/models` 線上清單改為 `stealth/glyph-cluster:free`（網民大軍）與 `recursive/flint-v1.0:free`（公關裁判長），同步修改 [index.html](../index.html) 與 [worker/src/index.js](../worker/src/index.js)。驗證：`node worker/build.mjs --check` 同步；公用線路實測見下一筆日誌。
+
+## [2026-11-28 17:05] fix | 免費模型實測過慢，AI 預設模型改回 DeepSeek | #AI串接
+- **執行代理**：Claude Code by Anthropic
+- **模型版本**：Claude Opus 5.5
+- **具體變更**：上一筆部署後公用線路實測 3 局，網民與裁判全數 `upstream_timeout`（504，分別卡滿 12 秒與 24 秒）。以 `cmd -p` 送入真實 Prompt 計時：網民用 `stealth/glyph-cluster:free` 推理 low 64 秒、medium 84 秒；裁判用 `recursive/flint-v1.0:free`（推理強度不可調）189 秒、改用 glyph 46 秒；輸出內容與 JSON 格式皆正常，但遠超逾時。因此把 [index.html](../index.html) 的 `DEFAULT_MODELS` 與 [worker/src/index.js](../worker/src/index.js) 的 `KINDS` 改回 `deepseek/deepseek-v4.1-flash-fast`；兩個免費模型保留在玩家自備 Key 的模型選單，`MODEL_EFFORT` 為 glyph 設 `low`。驗證：`node worker/build.mjs --check` 同步；部署後公用線路實測結果見本筆提交後的回報。
